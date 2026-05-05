@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OptimalPrint — 3D Print Settings Optimiser</title>
+<meta name="description" content="Get perfect 3D print settings instantly. Free calculator for layer height, speed, temperature, infill and failure risk analysis.">
+<style>
+:root{
+  --bg:#06060e;--surface:#0d0d1c;--surface2:rgba(255,255,255,0.05);--surface3:#13132a;
+  --border:rgba(108,99,255,0.18);--border2:rgba(108,99,255,0.35);
+  --text:#e8e8f0;--text2:#9090bb;--text3:#44445a;
+  --accent:#6c63ff;--accent2:#4f46e5;--glow:rgba(108,99,255,0.12);
+  --green:#22c98a;--amber:#f59e0b;--red:#ef4444;
+  --green-bg:rgba(34,201,138,0.09);--amber-bg:rgba(245,158,11,0.09);--red-bg:rgba(239,68,68,0.09);
+  --green-bd:rgba(34,201,138,0.25);--amber-bd:rgba(245,158,11,0.25);--red-bd:rgba(239,68,68,0.25);
+  --input-bg:#0a0a1a;--r:14px;--r-sm:9px;
+  --sw:240px;--sc:58px;--hh:54px;
+}
+body.light{
+  --bg:#f0f0fa;--surface:#fff;--surface2:rgba(0,0,0,0.03);--surface3:#f5f5ff;
+  --border:rgba(108,99,255,0.2);--border2:rgba(108,99,255,0.4);
+  --text:#111118;--text2:#555575;--text3:#9090aa;--input-bg:#f8f8ff;
+  --green-bg:rgba(34,201,138,0.08);--amber-bg:rgba(245,158,11,0.08);--red-bg:rgba(239,68,68,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 15% 15%,rgba(108,99,255,0.06) 0%,transparent 50%),radial-gradient(ellipse at 85% 85%,rgba(79,70,229,0.04) 0%,transparent 50%);pointer-events:none;z-index:0;}
+select{color-scheme:dark;}
+body.light select{color-scheme:light;}
+select option{background:var(--input-bg)!important;color:var(--text)!important;}
+
+/* HEADER */
+.hdr{position:fixed;top:0;left:0;right:0;height:var(--hh);z-index:300;background:rgba(6,6,14,0.92);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;}
+body.light .hdr{background:rgba(240,240,250,0.92);}
+.hdr-logo{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:800;color:var(--accent);text-decoration:none;letter-spacing:-.01em;}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.hbtn{background:transparent;border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 13px;font-size:12px;color:var(--text2);cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;font-weight:600;}
+.hbtn:hover{border-color:var(--border2);color:var(--text);}
+.hbtn-a{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff!important;border-color:transparent!important;box-shadow:0 0 18px rgba(108,99,255,0.35);}
+.stog{background:transparent;border:none;color:var(--text2);cursor:pointer;padding:7px;border-radius:var(--r-sm);transition:all .2s;font-size:18px;line-height:1;}
+.stog:hover{background:var(--surface2);color:var(--text);}
+
+/* SIDEBAR */
+.sb{position:fixed;top:var(--hh);left:0;bottom:0;width:var(--sw);background:rgba(8,8,18,0.97);backdrop-filter:blur(24px);border-right:1px solid var(--border);z-index:200;transition:width .25s cubic-bezier(.4,0,.2,1);overflow:hidden;display:flex;flex-direction:column;}
+body.light .sb{background:rgba(248,248,255,0.97);}
+.sb.col{width:var(--sc);}
+.sb-inner{width:var(--sw);flex:1;overflow-y:auto;overflow-x:hidden;padding:10px 8px 20px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.sb-inner::-webkit-scrollbar{width:3px;}
+.sb-inner::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.nsl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--text3);padding:10px 10px 4px;white-space:nowrap;overflow:hidden;transition:opacity .2s;}
+.sb.col .nsl{opacity:0;}
+.ni{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:var(--r-sm);cursor:pointer;transition:all .2s;white-space:nowrap;overflow:hidden;border:none;background:transparent;color:var(--text2);width:100%;text-align:left;font-size:13px;font-weight:500;}
+.ni:hover{background:rgba(108,99,255,0.08);color:var(--text);}
+.ni.active{background:rgba(108,99,255,0.14);color:var(--accent);border:1px solid rgba(108,99,255,0.2);}
+.nic{font-size:15px;flex-shrink:0;width:18px;text-align:center;}
+.nil{overflow:hidden;transition:opacity .15s;}
+.sb.col .nil{opacity:0;width:0;}
+.ndiv{height:1px;background:var(--border);margin:8px 4px;}
+.sb-foot{padding:12px 8px;border-top:1px solid var(--border);width:var(--sw);}
+.sb-user{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r-sm);background:var(--surface2);}
+.sb-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;}
+.sb.col .sb-foot{opacity:0;pointer-events:none;}
+
+/* MAIN */
+.main{margin-left:var(--sw);margin-top:var(--hh);transition:margin-left .25s cubic-bezier(.4,0,.2,1);min-height:calc(100vh - var(--hh));position:relative;z-index:1;}
+.main.col{margin-left:var(--sc);}
+.wrap{max-width:940px;margin:0 auto;padding:28px 20px 120px;}
+.page{display:none;animation:fadeIn .3s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+/* SKELETON */
+.skel{background:linear-gradient(90deg,var(--surface2) 25%,rgba(255,255,255,0.08) 50%,var(--surface2) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--r-sm);}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+/* HERO */
+.hero{text-align:center;margin-bottom:28px;}
+.badge{display:inline-block;background:var(--glow);border:1px solid var(--border2);color:var(--accent);font-size:10px;font-weight:800;padding:4px 14px;border-radius:99px;margin-bottom:14px;letter-spacing:.08em;}
+.hero h1{font-size:clamp(20px,3.5vw,32px);font-weight:800;letter-spacing:-.03em;margin-bottom:8px;background:linear-gradient(135deg,var(--text) 0%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero p{font-size:13px;color:var(--text2);max-width:460px;margin:0 auto;line-height:1.7;}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:14px;box-shadow:0 4px 24px rgba(0,0,0,0.15),inset 0 1px 0 rgba(255,255,255,0.03);}
+.card:hover{border-color:var(--border2);transition:border-color .2s;}
+.ct{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:14px;}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;margin-bottom:11px;}
+@media(max-width:640px){.g2,.g3{grid-template-columns:1fr;}}
+
+/* FIELDS */
+.f{display:flex;flex-direction:column;gap:5px;}
+.f label{font-size:10px;font-weight:800;color:var(--text2);letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:5px;}
+.f select,.f input{background:var(--input-bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font-size:13px;color:var(--text);outline:none;transition:all .2s;width:100%;}
+.f select:focus,.f input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,0.1);}
+.cur-wrap{display:flex;gap:7px;}
+.cur-sel{flex-shrink:0;width:110px;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 8px;font-size:12px;color:var(--text);outline:none;transition:all .2s;}
+.cur-sel:focus{border-color:var(--accent);}
+
+/* TOOLTIP */
+.tt{position:relative;}
+.tt-tip{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a1a30;border:1px solid var(--border2);color:var(--text2);font-size:11px;padding:6px 10px;border-radius:8px;white-space:nowrap;z-index:999;pointer-events:none;max-width:220px;white-space:normal;text-align:center;line-height:1.5;}
+.tt:hover .tt-tip{display:block;animation:fadeIn .15s ease;}
+
+/* SLIDER */
+.slider-wrap{margin-bottom:12px;}
+.slider-hdr{display:flex;justify-content:space-between;margin-bottom:8px;}
+.slider-lbl{font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;}
+.slider-val{font-size:11px;color:var(--accent);font-weight:700;}
+.slider-ends{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px;}
+input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;}
+
+/* BTN */
+.btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:var(--r-sm);font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:8px;box-shadow:0 4px 18px rgba(108,99,255,0.3);}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 26px rgba(108,99,255,0.45);}
+.btn:active{transform:scale(.99);}
+.btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+
+/* PROGRESS */
+.pb{height:3px;background:var(--border);border-radius:99px;margin-top:10px;overflow:hidden;display:none;}
+.pf{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#818cf8);border-radius:99px;transition:width .3s;}
+
+/* STATS BAR */
+.sbar{display:flex;gap:0;background:var(--surface3);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px;}
+.si{flex:1;padding:14px;text-align:center;border-right:1px solid var(--border);transition:background .2s;cursor:default;}
+.si:last-child{border-right:none;}
+.si:hover{background:var(--glow);}
+.sv{font-size:20px;font-weight:800;color:var(--accent);}
+.sl{font-size:10px;color:var(--text3);margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+
+/* METRICS */
+.mg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+@media(max-width:640px){.mg{grid-template-columns:1fr 1fr;}}
+.metric{background:var(--surface3);border:1px solid var(--border);border-radius:var(--r);padding:18px 12px;text-align:center;position:relative;overflow:hidden;transition:all .4s;}
+.metric::before{content:'';position:absolute;top:0;left:0;right:0;height:100%;background:linear-gradient(135deg,rgba(108,99,255,0.06) 0%,transparent 100%);pointer-events:none;}
+.metric::after{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:opacity .5s;}
+.metric.lit{border-color:rgba(108,99,255,0.4);box-shadow:0 0 24px rgba(108,99,255,0.12);}
+.metric.lit::after{opacity:1;}
+.mv{font-size:24px;font-weight:800;color:var(--accent);letter-spacing:-.03em;line-height:1;transition:all .3s;}
+.ml{font-size:9px;color:var(--text3);margin-top:6px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;}
+.m-icon{font-size:18px;margin-bottom:6px;display:block;}
+
+/* EXTRA */
+.extra{display:flex;flex-wrap:wrap;gap:14px;background:var(--surface3);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 15px;margin-bottom:12px;}
+.ei{font-size:12px;color:var(--text2);}
+.ei strong{color:var(--text);font-weight:700;}
+
+/* RISKS */
+.risk{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:var(--r-sm);margin-bottom:8px;font-size:13px;font-weight:600;border:1px solid;animation:slideUp .3s ease both;}
+.risk-low{background:var(--green-bg);color:var(--green);border-color:var(--green-bd);}
+.risk-med{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd);}
+.risk-high{background:var(--red-bg);color:var(--red);border-color:var(--red-bd);}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* TIPS */
+.tip{background:var(--surface3);border-left:3px solid var(--accent);border-radius:0 var(--r-sm) var(--r-sm) 0;padding:11px 14px;margin-bottom:8px;font-size:13px;color:var(--text2);line-height:1.6;animation:slideUp .3s ease both;}
+.brim-badge{display:inline-flex;align-items:center;gap:6px;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);border-radius:8px;padding:5px 13px;font-size:12px;font-weight:700;margin-bottom:12px;}
+.warn-box{background:var(--red-bg);border:1px solid var(--red-bd);border-radius:var(--r-sm);padding:11px 14px;margin-bottom:11px;font-size:13px;color:var(--red);line-height:1.6;}
+.info-box{background:var(--glow);border:1px solid var(--border2);border-radius:var(--r-sm);padding:11px 14px;margin-bottom:11px;font-size:13px;color:var(--text2);line-height:1.6;}
+
+/* TRADEOFF */
+.tradeoff{background:var(--surface3);border:1px solid var(--border);border-radius:var(--r-sm);padding:16px;margin-top:12px;}
+.br{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.bl{font-size:11px;color:var(--text2);width:110px;flex-shrink:0;font-weight:600;}
+.bt{flex:1;background:rgba(255,255,255,0.05);border-radius:99px;height:8px;overflow:hidden;}
+body.light .bt{background:rgba(0,0,0,0.06);}
+.bf{height:100%;border-radius:99px;transition:width .8s cubic-bezier(.4,0,.2,1);}
+.bp{font-size:11px;color:var(--text3);width:34px;text-align:right;font-weight:700;}
+
+/* COST */
+.cost-box{background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(79,70,229,0.05));border:1px solid var(--border2);border-radius:var(--r-sm);padding:16px;margin-top:12px;}
+.cost-big{font-size:38px;font-weight:800;color:var(--accent);letter-spacing:-.04em;}
+.cost-sub{font-size:12px;color:var(--text2);margin-top:4px;}
+
+/* SHARE */
+.share-row{display:flex;gap:8px;align-items:center;padding:10px 14px;background:var(--surface3);border:1px solid var(--border);border-radius:var(--r-sm);}
+.share-url{flex:1;font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.copy-btn{background:var(--accent);color:#fff;border:none;border-radius:7px;padding:6px 13px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
+.copy-btn:hover{background:var(--accent2);}
+.pdf-btn{background:rgba(108,99,255,0.1);color:var(--accent);border:1px solid var(--border2);border-radius:7px;padding:6px 13px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
+.pdf-btn:hover{background:var(--accent);color:#fff;}
+
+.divider{height:1px;background:var(--border);margin:16px 0;}
+.rw{display:none;}
+.rw.vis{display:block;animation:fadeIn .5s ease;}
+.com-tip{background:var(--surface3);border-left:3px solid var(--accent);border-radius:0 var(--r-sm) var(--r-sm) 0;padding:10px 13px;margin-bottom:7px;font-size:12px;color:var(--text2);line-height:1.6;}
+
+/* CONFETTI */
+.confetti-piece{position:fixed;width:8px;height:8px;border-radius:2px;pointer-events:none;z-index:9999;animation:confetti-fall 3s ease forwards;}
+@keyframes confetti-fall{0%{opacity:1;transform:translateY(-20px) rotate(0deg);}100%{opacity:0;transform:translateY(100vh) rotate(720deg);}}
+
+/* MATERIALS */
+.mat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px;}
+.mat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;transition:all .2s;}
+.mat-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 32px rgba(108,99,255,0.1);}
+.mat-name{font-size:16px;font-weight:800;margin-bottom:3px;}
+.mat-diff{font-size:11px;color:var(--text3);margin-bottom:7px;}
+.mat-desc{font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:8px;}
+.tag{font-size:10px;padding:2px 7px;border-radius:4px;display:inline-block;margin:1px 1px 0;font-weight:600;}
+.tg{background:var(--green-bg);color:var(--green);}
+.tr{background:var(--red-bg);color:var(--red);}
+.tn{background:var(--surface2);color:var(--text2);}
+
+/* COMMON */
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;}
+.cc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .2s;}
+.cc:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 8px 28px rgba(108,99,255,0.15);}
+.cc-e{font-size:24px;margin-bottom:8px;}
+.cc-n{font-size:13px;font-weight:700;margin-bottom:4px;}
+.cc-f{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;display:inline-block;margin-bottom:5px;background:var(--glow);color:var(--accent);}
+.cc-d{font-size:11px;color:var(--text2);line-height:1.5;}
+
+/* ACCORDION */
+.acc-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:9px;cursor:pointer;transition:all .2s;}
+.acc-item:hover{border-color:var(--border2);}
+.acc-hdr{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;gap:10px;}
+.acc-body{display:none;margin-top:13px;padding-top:13px;border-top:1px solid var(--border);}
+.acc-body.open{display:block;animation:fadeIn .2s ease;}
+.acc-sect{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin:9px 0 5px;}
+.acc-list{font-size:13px;color:var(--text2);padding-left:15px;line-height:1.9;}
+
+/* SLICER */
+.stabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;}
+.st{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 15px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text2);transition:all .2s;}
+.st.active{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent;color:#fff;box-shadow:0 4px 14px rgba(108,99,255,0.3);}
+.srow{display:flex;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);gap:12px;}
+.ss{font-weight:700;color:var(--accent);width:130px;flex-shrink:0;font-size:11px;padding-top:1px;}
+.sp{color:var(--text2);font-size:12px;line-height:1.5;}
+
+/* COMPAT */
+.compat-row{display:flex;align-items:center;padding:9px 13px;border-radius:var(--r-sm);font-size:13px;gap:12px;margin-bottom:3px;}
+.cy{background:var(--green-bg);border:1px solid var(--green-bd);}
+.cn{background:var(--red-bg);border:1px solid var(--red-bd);}
+
+/* DRY */
+.dry-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:12px;}
+.dry-temps{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+.dry-temp-item{background:var(--surface3);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 16px;}
+.dry-temp-val{font-size:20px;font-weight:800;color:var(--accent);}
+.dry-temp-lbl{font-size:10px;color:var(--text3);margin-top:2px;font-weight:700;text-transform:uppercase;}
+.dry-tip{font-size:12px;background:var(--surface3);border-radius:var(--r-sm);padding:10px 13px;color:var(--text2);line-height:1.6;margin-top:6px;}
+
+/* GLOSSARY */
+.gg{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;}
+.gi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:13px;transition:all .2s;}
+.gi:hover{border-color:var(--border2);}
+.gt{font-size:13px;font-weight:800;color:var(--accent);margin-bottom:5px;}
+.gd{font-size:12px;color:var(--text2);line-height:1.6;}
+
+/* BED */
+.bed-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:12px;}
+.bed-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+.bed-name{font-size:15px;font-weight:700;}
+.sup-card{border-bottom:1px solid var(--border);padding:16px 0;}
+
+/* WIZARD */
+.wiz-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;max-width:620px;margin:0 auto;box-shadow:0 8px 40px rgba(108,99,255,0.1);}
+.wiz-q{font-size:17px;font-weight:700;margin-bottom:18px;line-height:1.5;}
+.wiz-opt{width:100%;text-align:left;background:var(--surface3);border:1px solid var(--border);border-radius:var(--r-sm);padding:13px 18px;font-size:13px;color:var(--text);cursor:pointer;margin-bottom:8px;transition:all .2s;display:block;font-weight:500;}
+.wiz-opt:hover{border-color:var(--accent);background:var(--glow);transform:translateX(4px);}
+.wiz-fix{background:var(--green-bg);border:1px solid var(--green-bd);border-radius:var(--r-sm);padding:18px;font-size:14px;color:var(--green);line-height:1.8;margin-top:8px;}
+.wiz-restart{margin-top:14px;background:transparent;border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 18px;font-size:13px;color:var(--text2);cursor:pointer;width:100%;font-weight:600;transition:all .2s;}
+.wiz-restart:hover{border-color:var(--border2);color:var(--text);}
+
+/* COMPARE */
+.comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:580px){.comp-grid{grid-template-columns:1fr;}}
+.comp-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;}
+.comp-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.comp-label{color:var(--text2);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+.comp-val{font-weight:700;color:var(--text);}
+.comp-better{color:var(--green)!important;}
+.comp-worse{color:var(--red)!important;}
+
+/* EMBED */
+.embed-box{background:var(--surface3);border:1px solid var(--border);border-radius:var(--r-sm);padding:16px;font-family:monospace;font-size:12px;color:var(--accent);line-height:1.8;word-break:break-all;margin-top:12px;}
+
+/* HISTORY & SAVED */
+.hist-item,.saved-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:13px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;transition:all .2s;flex-wrap:wrap;}
+.hist-item:hover,.saved-item:hover{border-color:var(--border2);}
+.saved-info{flex:1;}
+.saved-name{font-size:14px;font-weight:700;margin-bottom:3px;}
+.saved-meta{font-size:11px;color:var(--text2);}
+.saved-acts{display:flex;gap:7px;}
+.sav-btn{padding:6px 13px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid;transition:all .2s;}
+.sav-load{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent;}
+.sav-del{background:transparent;color:var(--red);border-color:var(--red-bd);}
+.empty{text-align:center;padding:48px;color:var(--text3);font-size:14px;line-height:2;}
+
+/* QUIZ */
+.quiz-result{background:linear-gradient(135deg,rgba(108,99,255,0.12),rgba(79,70,229,0.06));border:1px solid var(--border2);border-radius:var(--r);padding:24px;text-align:center;margin-top:8px;}
+.quiz-fil-name{font-size:28px;font-weight:800;color:var(--accent);margin-bottom:8px;}
+.quiz-desc{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:16px;}
+
+/* FAILURE GALLERY */
+.fail-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.fail-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;transition:all .2s;}
+.fail-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.fail-emoji{font-size:32px;margin-bottom:10px;}
+.fail-name{font-size:15px;font-weight:700;margin-bottom:6px;}
+.fail-desc{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:12px;}
+
+/* CHECKLIST */
+.check-step{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:12px;cursor:pointer;transition:all .2s;}
+.check-step:hover{border-color:var(--border2);}
+.check-hdr{display:flex;align-items:center;gap:12px;margin-bottom:0;}
+.check-num{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;}
+.check-num.done{background:linear-gradient(135deg,var(--green),#16a34a);}
+.check-title{font-size:14px;font-weight:700;flex:1;}
+.check-tasks{display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+.check-tasks.open{display:block;animation:fadeIn .2s ease;}
+.check-task{display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:13px;color:var(--text2);border-bottom:1px solid var(--border);cursor:pointer;}
+.check-task:last-child{border-bottom:none;}
+.check-task.done-task{color:var(--green);text-decoration:line-through;}
+.check-box{width:18px;height:18px;border:2px solid var(--border2);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.check-box.checked{background:var(--green);border-color:var(--green);}
+
+/* BLOG */
+.blog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.blog-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;cursor:pointer;transition:all .2s;}
+.blog-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 28px rgba(108,99,255,0.1);}
+.blog-emoji{font-size:28px;margin-bottom:10px;}
+.blog-cat{font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.blog-title{font-size:14px;font-weight:700;margin-bottom:6px;line-height:1.4;}
+.blog-read{font-size:11px;color:var(--text3);}
+.blog-content{display:none;}
+.blog-content.open{display:block;animation:fadeIn .3s ease;}
+.blog-body{font-size:13px;color:var(--text2);line-height:1.7;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+
+/* COST CALC */
+.cost-calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+@media(max-width:580px){.cost-calc-grid{grid-template-columns:1fr;}}
+.cost-result-box{background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(79,70,229,0.05));border:1px solid var(--border2);border-radius:var(--r);padding:20px;text-align:center;}
+.cost-num{font-size:42px;font-weight:800;color:var(--accent);letter-spacing:-.04em;}
+.cost-breakdown{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px;}
+.cb-item{background:var(--surface3);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px;text-align:center;}
+.cb-val{font-size:16px;font-weight:700;color:var(--text);}
+.cb-lbl{font-size:10px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.04em;}
+
+/* QUALITY ANALYSER */
+.qa-result{background:var(--surface3);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-top:14px;animation:fadeIn .4s ease;}
+.qa-score{font-size:48px;font-weight:800;text-align:center;margin-bottom:8px;}
+.qa-label{text-align:center;font-size:14px;font-weight:600;margin-bottom:14px;}
+
+/* MOBILE */
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(6,6,14,0.97);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:8px 0 14px;z-index:400;}
+body.light .mob-nav{background:rgba(240,240,250,0.97);}
+@media(max-width:700px){
+  .sb{transform:translateX(-100%);}
+  .sb.mob-open{transform:translateX(0);}
+  .main{margin-left:0!important;}
+  .mob-nav{display:flex;justify-content:space-around;}
+  .wrap{padding-bottom:100px;}
+  .mob-ov{display:block!important;}
+  .fab{display:flex!important;}
+}
+.mob-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:var(--text3);font-size:9px;cursor:pointer;padding:4px 8px;transition:color .2s;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+.mob-btn.active{color:var(--accent);}
+.mob-icon{font-size:19px;}
+.mob-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:199;backdrop-filter:blur(3px);}
+
+/* FAB */
+.fab{display:none;position:fixed;bottom:80px;right:16px;z-index:350;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 20px rgba(108,99,255,0.5);align-items:center;justify-content:center;transition:all .2s;}
+.fab:hover{transform:scale(1.1);}
+
+footer{border-top:1px solid var(--border);padding:20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;font-size:12px;color:var(--text3);}
+footer a{color:var(--text3);transition:color .2s;}
+footer a:hover{color:var(--accent);}
+.fl{display:flex;gap:16px;}
+</style>
+</head>
+<body>
+
+<div class="mob-ov" id="mob-ov" onclick="closeSb()"></div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <button class="stog" onclick="toggleSb()">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect y="3" width="18" height="1.8" rx="1" fill="currentColor"/><rect y="8.1" width="18" height="1.8" rx="1" fill="currentColor"/><rect y="13.2" width="12" height="1.8" rx="1" fill="currentColor"/></svg>
+  </button>
+  <a class="hdr-logo" href="/">
+    <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><path d="M16 3L3 10l13 7 13-7-13-7z" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/><path d="M3 22l13 7 13-7" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/><path d="M3 16l13 7 13-7" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round" opacity="0.5"/></svg>
+    OptimalPrint
+  </a>
+  <div class="hdr-right">
+    {% if current_user.is_authenticated %}
+      <span style="font-size:12px;color:var(--text2);">Hi, {{ current_user.username }} 👋</span>
+      <a href="/logout" class="hbtn">Log out</a>
+    {% else %}
+      <a href="/login" class="hbtn">Log in</a>
+      <a href="/register" class="hbtn hbtn-a">Sign up free</a>
+    {% endif %}
+    <button class="hbtn" onclick="toggleTheme()" id="theme-btn">☀</button>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sb" id="sb">
+  <div class="sb-inner">
+    <div class="nsl">Main</div>
+    <button class="ni active" onclick="pg('optimizer',this)"><span class="nic">⚡</span><span class="nil">Optimiser</span></button>
+    <button class="ni" onclick="pg('compare',this)"><span class="nic">⚖️</span><span class="nil">Compare filaments</span></button>
+    <button class="ni" onclick="pg('materials',this)"><span class="nic">🧪</span><span class="nil">Materials guide</span></button>
+    <button class="ni" onclick="pg('common',this)"><span class="nic">🖨️</span><span class="nil">Common prints</span></button>
+    <button class="ni" onclick="pg('compat',this)"><span class="nic">✅</span><span class="nil">Compatibility</span></button>
+    <button class="ni" onclick="pg('quiz',this)"><span class="nic">🎯</span><span class="nil">Material quiz</span></button>
+    <div class="ndiv"></div>
+    <div class="nsl">Fix problems</div>
+    <button class="ni" onclick="pg('troubleshoot',this)"><span class="nic">🔧</span><span class="nil">Troubleshooting</span></button>
+    <button class="ni" onclick="pg('wizard',this)"><span class="nic">🧙</span><span class="nil">First layer wizard</span></button>
+    <button class="ni" onclick="pg('gallery',this)"><span class="nic">🖼️</span><span class="nil">Failure gallery</span></button>
+    <button class="ni" onclick="pg('drying',this)"><span class="nic">💧</span><span class="nil">Drying guide</span></button>
+    <button class="ni" onclick="pg('bed',this)"><span class="nic">🛏️</span><span class="nil">Bed adhesion</span></button>
+    <button class="ni" onclick="pg('supports',this)"><span class="nic">🌳</span><span class="nil">Supports guide</span></button>
+    <div class="ndiv"></div>
+    <div class="nsl">Tools</div>
+    <button class="ni" onclick="pg('costcalc',this)"><span class="nic">💰</span><span class="nil">Cost calculator</span></button>
+    <button class="ni" onclick="pg('analyser',this)"><span class="nic">🔍</span><span class="nil">Quality analyser</span></button>
+    <button class="ni" onclick="pg('checklist',this)"><span class="nic">📋</span><span class="nil">Printer setup guide</span></button>
+    <div class="ndiv"></div>
+    <div class="nsl">Reference</div>
+    <button class="ni" onclick="pg('slicer',this)"><span class="nic">⚙️</span><span class="nil">Slicer guide</span></button>
+    <button class="ni" onclick="pg('glossary',this)"><span class="nic">📖</span><span class="nil">Glossary</span></button>
+    <button class="ni" onclick="pg('blog',this)"><span class="nic">📝</span><span class="nil">Blog & tips</span></button>
+    <button class="ni" onclick="pg('embed',this)"><span class="nic">🔗</span><span class="nil">Embed tool</span></button>
+    <div class="ndiv"></div>
+    <div class="nsl">My account</div>
+    <button class="ni" onclick="pg('history',this)"><span class="nic">📊</span><span class="nil">Print history</span></button>
+    <button class="ni" onclick="pg('saved',this)"><span class="nic">💾</span><span class="nil">Saved settings</span></button>
+    <button class="ni" onclick="pg('about',this)"><span class="nic">ℹ️</span><span class="nil">About</span></button>
+  </div>
+  {% if current_user.is_authenticated %}
+  <div class="sb-foot">
+    <div class="sb-user">
+      <div class="sb-av">{{ current_user.username[0].upper() }}</div>
+      <div style="overflow:hidden;"><div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;">{{ current_user.username }}</div><div style="font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;">{{ current_user.email }}</div></div>
+    </div>
+  </div>
+  {% else %}
+  <div class="sb-foot">
+    <a href="/register" style="text-decoration:none;">
+      <div style="background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(79,70,229,0.08));border:1px solid var(--border2);border-radius:var(--r-sm);padding:10px 12px;cursor:pointer;">
+        <div style="font-size:12px;font-weight:700;color:var(--accent);white-space:nowrap;overflow:hidden;">✦ Sign up free</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;">Save settings & history</div>
+      </div>
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- MAIN -->
+<div class="main" id="main">
+<div class="wrap">
+
+<!-- OPTIMISER -->
+<div id="page-optimizer" class="page active">
+  <div class="hero">
+    <div class="badge">✦ FREE · NO SIGNUP · INSTANT RESULTS</div>
+    <h1>Perfect 3D print settings, instantly</h1>
+    <p>Optimal parameters, failure risk, cost estimate and pro tips — from your exact setup in seconds.</p>
+  </div>
+  <div class="sbar">
+    <div class="si"><div class="sv">9</div><div class="sl">Filaments</div></div>
+    <div class="si"><div class="sv">4</div><div class="sl">Printers</div></div>
+    <div class="si"><div class="sv">20+</div><div class="sl">Common prints</div></div>
+    <div class="si"><div class="sv">7</div><div class="sl">Failure fixes</div></div>
+    <div class="si"><div class="sv">100%</div><div class="sl">Free</div></div>
+  </div>
+  <div class="card">
+    <div class="ct">Your printer & filament</div>
+    <div class="g2">
+      <div class="f tt"><label>🧵 Filament type<span class="tt-tip">Choose your filament material. This affects temperature, speed, and failure risks.</span></label><select id="filament"><option value="PLA">PLA — Easy, great for beginners</option><option value="PLA+">PLA+ — Tougher than regular PLA</option><option value="PETG">PETG — Strong all-rounder</option><option value="ABS">ABS — Heat resistant, advanced</option><option value="ASA">ASA — Outdoor & UV resistant</option><option value="TPU">TPU — Flexible rubber-like</option><option value="Nylon">Nylon — Industrial strength</option><option value="Wood PLA">Wood PLA — Wood-like finish</option><option value="Carbon Fibre PLA">Carbon Fibre PLA — Ultra stiff</option></select></div>
+      <div class="f tt"><label>🖨️ Printer type<span class="tt-tip">Your printer type affects max speed and what filaments you can use reliably.</span></label><select id="printer"><option value="bedslinger">Bed slinger (Ender 3, CR-10)</option><option value="corexY">CoreXY (Bambu, Voron, Prusa XL)</option><option value="delta">Delta (Anycubic Kossel)</option><option value="direct">Direct drive (Prusa MK4)</option></select></div>
+    </div>
+    <div class="g3">
+      <div class="f tt"><label>🎯 What are you printing?<span class="tt-tip">This changes infill density, wall count and infill pattern for the right balance.</span></label><select id="purpose"><option value="functional">Functional — needs strength</option><option value="visual">Visual — needs detail</option><option value="flexible">Flexible / moving part</option><option value="prototype">Prototype — just needs to work</option></select></div>
+      <div class="f tt"><label>🔩 Nozzle size<span class="tt-tip">Larger nozzle = faster prints, less detail. 0.4mm is standard for most printers.</span></label><select id="nozzle"><option value="0.2">0.2mm — ultra fine detail</option><option value="0.4" selected>0.4mm — standard</option><option value="0.6">0.6mm — faster prints</option><option value="0.8">0.8mm — fastest, rough</option></select></div>
+      <div class="f tt"><label>📦 Object size<span class="tt-tip">Used to estimate print time, filament usage and weight.</span></label><select id="size"><option value="small">Small — under 5cm</option><option value="medium" selected>Medium — 5 to 15cm</option><option value="large">Large — over 15cm</option></select></div>
+    </div>
+    <div class="g2">
+      <div class="f tt"><label>🏆 Priority<span class="tt-tip">What matters most? Balanced is best for most prints.</span></label><select id="priority"><option value="balanced">Balanced — best of both worlds</option><option value="fastest">Fastest print</option><option value="strongest">Strongest part</option><option value="smoothest">Smoothest surface</option></select></div>
+      <div class="f"><label>💰 Filament cost per kg</label><div class="cur-wrap"><select id="currency" class="cur-sel">{% for code,c in currencies.items() %}<option value="{{ code }}" data-symbol="{{ c.symbol }}" {% if code=='USD' %}selected{% endif %}>{{ c.symbol }} {{ code }}</option>{% endfor %}</select><input type="number" id="filament_cost" placeholder="e.g. 25" min="0" step="0.01" style="flex:1;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font-size:13px;color:var(--text);outline:none;transition:all .2s;"></div></div>
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-hdr"><span class="slider-lbl">✨ Quality vs Speed</span><span class="slider-val" id="ql-label">Balanced (5/10)</span></div>
+      <input type="range" id="quality_level" min="1" max="10" value="5" oninput="updateQL(this.value)">
+      <div class="slider-ends"><span>⚡ Faster</span><span>✨ Higher quality</span></div>
+    </div>
+    <button class="btn" onclick="calculate()">⚡ Calculate optimal settings</button>
+    <div class="pb" id="prog"><div class="pf" id="prog-fill"></div></div>
+  </div>
+
+  <div class="rw" id="results">
+    <div class="card">
+      <div class="ct">Recommended settings</div>
+      <div class="mg">
+        <div class="metric" id="m-layer"><span class="m-icon">📏</span><div class="mv" id="r-layer">—</div><div class="ml">Layer height</div></div>
+        <div class="metric" id="m-speed"><span class="m-icon">🚀</span><div class="mv" id="r-speed">—</div><div class="ml">Print speed</div></div>
+        <div class="metric" id="m-infill"><span class="m-icon">🔲</span><div class="mv" id="r-infill">—</div><div class="ml">Infill</div></div>
+        <div class="metric" id="m-time"><span class="m-icon">⏱️</span><div class="mv" id="r-time">—</div><div class="ml">Est. time</div></div>
+      </div>
+      <div class="extra">
+        <div class="ei">🌡️ Nozzle <strong id="r-nozzle">—</strong></div>
+        <div class="ei">🛏️ Bed <strong id="r-bed">—</strong></div>
+        <div class="ei">💨 Cooling <strong id="r-cooling">—</strong></div>
+        <div class="ei">🧱 Walls <strong id="r-walls">—</strong></div>
+        <div class="ei">🔲 Pattern <strong id="r-pattern">—</strong></div>
+        <div class="ei">↩️ Retraction <strong id="r-retraction">—</strong></div>
+        <div class="ei">⚖️ Weight <strong id="r-weight">—</strong></div>
+        <div class="ei">🧵 Filament <strong id="r-length">—</strong></div>
+      </div>
+      <div id="r-brim"></div><div id="r-compat"></div><div id="r-enclosure"></div><div id="r-printer-note"></div>
+      <div class="ct">Failure risk analysis</div>
+      <div id="r-warp"></div><div id="r-string"></div><div id="r-adhesion"></div>
+      <div class="tradeoff">
+        <div class="ct" style="margin-bottom:12px;">Speed vs quality tradeoff</div>
+        <div class="br"><div class="bl">Surface quality</div><div class="bt"><div class="bf" id="b-quality" style="background:linear-gradient(90deg,#6c63ff,#818cf8);width:0%"></div></div><div class="bp" id="bp-quality">—</div></div>
+        <div class="br"><div class="bl">Print speed</div><div class="bt"><div class="bf" id="b-speed" style="background:linear-gradient(90deg,#22c98a,#34d399);width:0%"></div></div><div class="bp" id="bp-speed">—</div></div>
+        <div class="br"><div class="bl">Part strength</div><div class="bt"><div class="bf" id="b-strength" style="background:linear-gradient(90deg,#f59e0b,#fbbf24);width:0%"></div></div><div class="bp" id="bp-strength">—</div></div>
+        <div class="br"><div class="bl">Material used</div><div class="bt"><div class="bf" id="b-material" style="background:linear-gradient(90deg,#ef4444,#f87171);width:0%"></div></div><div class="bp" id="bp-material">—</div></div>
+      </div>
+      <div id="r-cost-sec" style="display:none;"><div class="divider"></div><div class="ct">Print cost estimate</div><div class="cost-box"><div class="cost-big" id="r-cost">—</div><div class="cost-sub" id="r-cost-sub">—</div></div></div>
+      <div class="divider"></div>
+      <div class="ct">Pro tips</div><div id="r-tips"></div>
+      <div class="divider"></div>
+      <div class="ct">Community tips</div><div id="r-comm-tips"></div>
+      <div class="divider"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <button class="btn" style="max-width:140px;margin-top:0;font-size:12px;padding:9px;" onclick="saveSetting()">💾 Save</button>
+        <button class="pdf-btn" onclick="exportPDF()">📄 Export PDF</button>
+        <div class="share-row" style="flex:1;min-width:180px;"><div class="share-url" id="share-url">Calculate to get a shareable link</div><button class="copy-btn" onclick="copyLink()">Copy link</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARE -->
+<div id="page-compare" class="page">
+  <div class="hero"><h1>Compare filaments</h1><p>Side by side to pick the right material for your project</p></div>
+  <div class="g2" style="margin-bottom:20px;">
+    <div class="f"><label>🧪 Filament A</label><select id="comp-a" onchange="runCompare()">{% for name in filaments.keys() %}<option value="{{name}}">{{name}}</option>{% endfor %}</select></div>
+    <div class="f"><label>🧪 Filament B</label><select id="comp-b" onchange="runCompare()">{% for name,f in filaments.items() %}<option value="{{name}}" {% if loop.index==2 %}selected{% endif %}>{{name}}</option>{% endfor %}</select></div>
+  </div>
+  <div id="compare-results"></div>
+</div>
+
+<!-- MATERIALS -->
+<div id="page-materials" class="page">
+  <div class="hero"><h1>Material guide</h1><p>All filaments — difficulty, properties, pros, cons and best brands</p></div>
+  <div class="mat-grid">
+    {% for name,f in filaments.items() %}
+    <div class="mat-card">
+      <div class="mat-name" style="color:{{f.color}}">{{name}}</div>
+      <div class="mat-diff">{% for i in range(5) %}{% if i<f.difficulty %}★{% else %}☆{% endif %}{% endfor %}</div>
+      <div class="mat-desc">{{f.description}}</div>
+      <div style="margin-bottom:5px;">{% for p in f.pros %}<span class="tag tg">{{p}}</span>{% endfor %}</div>
+      <div style="margin-bottom:7px;">{% for c in f.cons %}<span class="tag tr">{{c}}</span>{% endfor %}</div>
+      {% if f.beginner_friendly %}<span class="tag tn">👶 Beginner</span>{% endif %}
+      {% if f.needs_enclosure %}<span class="tag tr">🏠 Enclosure needed</span>{% endif %}
+      {% if f.food_safe %}<span class="tag tg">🍽️ Food safe</span>{% endif %}
+      {% if f.outdoor_safe %}<span class="tag tg">🌤️ Outdoor safe</span>{% endif %}
+      {% if f.flexible %}<span class="tag tg">🌀 Flexible</span>{% endif %}
+      <div style="margin-top:10px;font-size:11px;color:var(--text2);">Nozzle <strong style="color:var(--text)">{{f.nozzle_temp}}°C</strong> · Bed <strong style="color:var(--text)">{{f.bed_temp}}°C</strong></div>
+      <div style="margin-top:4px;font-size:10px;color:var(--text3);">{{f.brands|join(', ')}}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- COMMON PRINTS -->
+<div id="page-common" class="page">
+  <div class="hero"><h1>Common prints</h1><p>Click any to auto-fill the optimiser with perfect settings</p></div>
+  <div class="cg">
+    {% for key,p in common_prints.items() %}
+    <div class="cc" onclick="loadCommon('{{p.filament}}','{{p.purpose}}','{{p.size}}','{{p.priority}}','{{p.printer}}')">
+      <div class="cc-e">{{p.emoji}}</div><div class="cc-n">{{p.name}}</div><div class="cc-f">{{p.filament}}</div><div class="cc-d">{{p.notes}}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- COMPAT -->
+<div id="page-compat" class="page">
+  <div class="hero"><h1>Printer compatibility</h1><p>Which filaments work with your printer</p></div>
+  <div class="f" style="max-width:340px;margin-bottom:20px;"><label>🖨️ Your printer</label><select id="compat-printer" onchange="updateCompat()">{% for key,p in printer_profiles.items() %}<option value="{{key}}">{{p.name}}</option>{% endfor %}</select></div>
+  <div class="card">
+    {% for fil_key,f in filaments.items() %}
+    <div class="compat-row cy" data-fil="{{fil_key}}" style="border-radius:var(--r-sm);margin-bottom:4px;">
+      <span style="font-size:16px;width:22px;">✓</span>
+      <span style="font-weight:700;width:170px;color:{{f.color}}">{{fil_key}}</span>
+      <span style="font-size:12px;color:var(--text2);" id="cn-{{fil_key}}">Compatible</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- MATERIAL QUIZ -->
+<div id="page-quiz" class="page">
+  <div class="hero"><h1>Material quiz 🎯</h1><p>Answer 2-3 questions and we recommend the perfect filament for your project</p></div>
+  <div class="wiz-card">
+    <div class="wiz-q" id="quiz-q"></div>
+    <div id="quiz-opts"></div>
+    <div id="quiz-result" style="display:none;"></div>
+    <button class="wiz-restart" onclick="quizStart()" id="quiz-restart" style="display:none;">↩ Start over</button>
+  </div>
+</div>
+
+<!-- TROUBLESHOOT -->
+<div id="page-troubleshoot" class="page">
+  <div class="hero"><h1>Troubleshooting</h1><p>Pick your problem for step-by-step fixes</p></div>
+  {% for key,t in troubleshooting.items() %}
+  <div class="acc-item" onclick="acc(this)">
+    <div class="acc-hdr"><span style="display:flex;align-items:center;gap:10px;"><span style="font-size:18px;">{{t.emoji}}</span><span>{{t.problem}}</span></span><span style="color:var(--accent);font-size:20px;font-weight:300;flex-shrink:0;margin-left:auto;">+</span></div>
+    <div class="acc-body">
+      <div class="acc-sect">Why this happens</div><ul class="acc-list">{% for c in t.causes %}<li>{{c}}</li>{% endfor %}</ul>
+      <div class="acc-sect">How to fix it</div><ul class="acc-list">{% for fx in t.fixes %}<li>{{fx}}</li>{% endfor %}</ul>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- FAILURE GALLERY -->
+<div id="page-gallery" class="page">
+  <div class="hero"><h1>Print failure gallery 🖼️</h1><p>Common print failures — what they look like, why they happen, and how to fix them</p></div>
+  <div class="fail-grid">
+    {% for f in failure_gallery %}
+    <div class="fail-card">
+      <div class="fail-emoji">{{f.emoji}}</div>
+      <div class="fail-name">{{f.name}}</div>
+      <div class="fail-desc">{{f.description}}</div>
+      <div class="acc-sect">Causes</div>
+      <ul class="acc-list" style="margin-bottom:10px;">{% for c in f.causes %}<li>{{c}}</li>{% endfor %}</ul>
+      <div class="acc-sect">Fixes</div>
+      <ul class="acc-list" style="margin-bottom:10px;">{% for fx in f.fixes %}<li>{{fx}}</li>{% endfor %}</ul>
+      <div class="tip" style="margin-bottom:0;">💡 {{f.prevention}}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- DRYING -->
+<div id="page-drying" class="page">
+  <div class="hero"><h1>Filament drying guide</h1><p>Temperatures, times and signs of wet filament for every material</p></div>
+  {% for d in drying_guide %}
+  <div class="dry-card">
+    <div style="font-size:16px;font-weight:800;color:{{d.color}};margin-bottom:10px;">{{d.filament}}</div>
+    <div class="dry-temps"><div class="dry-temp-item"><div class="dry-temp-val">{{d.temp}}</div><div class="dry-temp-lbl">Temperature</div></div><div class="dry-temp-item"><div class="dry-temp-val">{{d.time}}</div><div class="dry-temp-lbl">Drying time</div></div></div>
+    <div style="font-size:12px;color:var(--amber);font-weight:600;margin-bottom:4px;">⚠ Signs of wet filament:</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.6;">{{d.signs}}</div>
+    <div class="dry-tip"><strong>Method:</strong> {{d.method}}</div>
+    <div class="dry-tip" style="margin-top:6px;"><strong>Storage:</strong> {{d.storage}}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- BED ADHESION -->
+<div id="page-bed" class="page">
+  <div class="hero"><h1>Bed adhesion guide</h1><p>Which surface works best and when to use glue</p></div>
+  {% for b in bed_adhesion %}
+  <div class="bed-card">
+    <div class="bed-hdr"><span style="font-size:22px;">{{b.emoji}}</span><div class="bed-name">{{b.surface}}</div><span class="tag tn">{{b.difficulty}}</span>{% if b.glue_needed %}<span class="tag tr">Needs glue</span>{% endif %}</div>
+    <div style="margin-bottom:8px;"><strong style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;">Works best with: </strong>{% for fi in b.best_for %}<span class="tag tg">{{fi}}</span>{% endfor %}</div>
+    {% if b.avoid %}<div style="margin-bottom:8px;"><strong style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;">Avoid with: </strong>{% for fi in b.avoid %}<span class="tag tr">{{fi}}</span>{% endfor %}</div>{% endif %}
+    <div class="dry-tip">{{b.tip}}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- SUPPORTS -->
+<div id="page-supports" class="page">
+  <div class="hero"><h1>Supports guide</h1><p>When to use supports, which type, and recommended settings</p></div>
+  <div class="card"><div class="ct">When do you need supports?</div>{% for w in supports_guide.when %}<div style="border-bottom:1px solid var(--border);padding:14px 0;"><div style="font-size:14px;font-weight:700;margin-bottom:5px;">{{w.rule}}</div><div style="font-size:13px;color:var(--text2);">{{w.detail}}</div></div>{% endfor %}</div>
+  <div class="card"><div class="ct">Support types</div>{% for t in supports_guide.types %}<div class="sup-card"><div style="font-size:14px;font-weight:700;margin-bottom:7px;">{{t.emoji}} {{t.name}}</div><div style="margin-bottom:6px;">{% for p in t.pros %}<span class="tag tg">{{p}}</span>{% endfor %}{% for c in t.cons %}<span class="tag tr">{{c}}</span>{% endfor %}</div><div style="font-size:12px;color:var(--text2);">Best for: {{t.best_for}}</div></div>{% endfor %}</div>
+  <div class="card"><div class="ct">Recommended settings</div>{% for s in supports_guide.settings %}<div class="srow"><div class="ss">{{s.setting}}</div><div><strong style="color:var(--accent)">{{s.value}}</strong> — <span class="sp">{{s.detail}}</span></div></div>{% endfor %}</div>
+</div>
+
+<!-- COST CALCULATOR -->
+<div id="page-costcalc" class="page">
+  <div class="hero"><h1>3D printing cost calculator 💰</h1><p>Calculate the true cost of your print — filament, electricity and time</p></div>
+  <div class="card">
+    <div class="ct">Print details</div>
+    <div class="cost-calc-grid">
+      <div class="f"><label>Filament weight (grams)</label><input type="number" id="cc-weight" placeholder="e.g. 50" min="0" step="1"></div>
+      <div class="f"><label>Filament cost per kg (your currency)</label><input type="number" id="cc-filcost" placeholder="e.g. 25" min="0" step="0.01"></div>
+      <div class="f"><label>Print time (hours)</label><input type="number" id="cc-hours" placeholder="e.g. 3.5" min="0" step="0.1"></div>
+      <div class="f"><label>Printer wattage (watts)</label><input type="number" id="cc-watts" placeholder="e.g. 120" min="0" step="1" value="120"></div>
+      <div class="f"><label>Electricity cost per kWh</label><input type="number" id="cc-kwh" placeholder="e.g. 0.15" min="0" step="0.001" value="0.15"></div>
+      <div class="f"><label>Markup / profit margin (%)</label><input type="number" id="cc-markup" placeholder="e.g. 30" min="0" step="1" value="0"></div>
+    </div>
+    <button class="btn" onclick="calcCost()">Calculate total cost</button>
+  </div>
+  <div id="cc-result" style="display:none;">
+    <div class="cost-result-box">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:6px;">Total print cost</div>
+      <div class="cost-num" id="cc-total">—</div>
+      <div class="cost-breakdown">
+        <div class="cb-item"><div class="cb-val" id="cc-fil-cost">—</div><div class="cb-lbl">Filament</div></div>
+        <div class="cb-item"><div class="cb-val" id="cc-elec-cost">—</div><div class="cb-lbl">Electricity</div></div>
+        <div class="cb-item"><div class="cb-val" id="cc-profit">—</div><div class="cb-lbl">Markup</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QUALITY ANALYSER -->
+<div id="page-analyser" class="page">
+  <div class="hero"><h1>Print quality analyser 🔍</h1><p>Describe your print problem and get a quality score with targeted fixes</p></div>
+  <div class="card">
+    <div class="ct">Describe your print</div>
+    <div style="margin-bottom:12px;"><label style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px;">What issues can you see? (select all that apply)</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;" id="qa-issues">
+        <button class="qa-issue" onclick="toggleIssue(this)" data-issue="stringing" data-score="15">🕸️ Stringing</button>
+        <button class="qa-issue" onclick="toggleIssue(this)" data-issue="warping" data-score="25">⬆️ Warping</button>
+        <button class="qa-issue" onclick="toggleIssue(this)" data-issue="layer_shift" data-score="30">↔️ Layer shifting</button>
+        <button class="qa-issue" onclick="toggleIssue(this)" data-issue="underextrusion" data-score="20">📉 Under-extrusion</button>
+        <button class="qa-issue" onclick="toggleIssue(this)" data-issue="blobs" data-score="10">🫧 Blobs/zits</button>
+        <button class="qa-issue" onclick="toggleIssue(this)" data-issue="ghosting" data-score="15">👻 Ghosting/ringing</button>
+        <button class="qa-issue" onclick="toggleIssue(this)" data-issue="elephant_foot" data-score="10">🐘 Elephant foot</button>
+        <button class="qa-issue" onclick="toggleIssue(this)" data-issue="spaghetti" data-score="40">🍝 Spaghetti/detached</button>
+      </div>
+    </div>
+    <button class="btn" onclick="analyseQuality()">Analyse print quality</button>
+  </div>
+  <div id="qa-result" style="display:none;">
+    <div class="card qa-result">
+      <div class="qa-score" id="qa-score-display">—</div>
+      <div class="qa-label" id="qa-label">—</div>
+      <div class="divider"></div>
+      <div id="qa-fixes"></div>
+    </div>
+  </div>
+</div>
+<style>
+.qa-issue{background:var(--surface3);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text2);transition:all .2s;}
+.qa-issue.selected{background:var(--glow);border-color:var(--border2);color:var(--accent);}
+</style>
+
+<!-- PRINTER CHECKLIST -->
+<div id="page-checklist" class="page">
+  <div class="hero"><h1>Printer setup guide 📋</h1><p>Step by step checklist for setting up your 3D printer for the first time</p></div>
+  <div id="cl-progress" style="margin-bottom:16px;"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:12px;font-weight:600;color:var(--text2);">Progress</span><span style="font-size:12px;color:var(--accent);font-weight:700;" id="cl-pct">0%</span></div><div style="background:var(--border);border-radius:99px;height:6px;overflow:hidden;"><div id="cl-bar" style="height:100%;background:linear-gradient(90deg,var(--accent),#818cf8);width:0%;border-radius:99px;transition:width .5s;"></div></div></div>
+  {% for step in printer_checklist %}
+  <div class="check-step" onclick="toggleStep(this)">
+    <div class="check-hdr">
+      <div class="check-num" id="step-num-{{step.step}}">{{step.step}}</div>
+      <span style="font-size:18px;">{{step.emoji}}</span>
+      <div class="check-title">{{step.title}}</div>
+      <span style="color:var(--accent);font-size:18px;font-weight:300;margin-left:auto;">+</span>
+    </div>
+    <div class="check-tasks">
+      {% for task in step.tasks %}
+      <div class="check-task" onclick="event.stopPropagation();toggleTask(this)">
+        <div class="check-box"></div>
+        <span>{{task}}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- WIZARD -->
+<div id="page-wizard" class="page">
+  <div class="hero"><h1>First layer wizard 🧙</h1><p>Answer questions to diagnose and fix your first layer problem</p></div>
+  <div class="wiz-card">
+    <div class="wiz-q" id="wiz-q"></div>
+    <div id="wiz-opts"></div>
+    <div id="wiz-fix" style="display:none;"></div>
+    <button class="wiz-restart" onclick="wizStart()" id="wiz-restart" style="display:none;">↩ Start over</button>
+  </div>
+</div>
+
+<!-- SLICER -->
+<div id="page-slicer" class="page">
+  <div class="hero"><h1>Slicer guide</h1><p>Exactly where to find each setting in your slicer</p></div>
+  <div class="stabs">{% for slicer in slicer_guide.keys() %}<button class="st {% if loop.first %}active{% endif %}" onclick="showSlicer('{{slicer}}',this)">{{slicer}}</button>{% endfor %}</div>
+  {% for slicer,s in slicer_guide.items() %}
+  <div id="sl-{{slicer}}" class="card" {% if not loop.first %}style="display:none"{% endif %}>
+    <div class="srow"><div class="ss">Layer height</div><div class="sp">{{s.layer_height}}</div></div>
+    <div class="srow"><div class="ss">Print speed</div><div class="sp">{{s.speed}}</div></div>
+    <div class="srow"><div class="ss">Infill density</div><div class="sp">{{s.infill}}</div></div>
+    <div class="srow"><div class="ss">Wall count</div><div class="sp">{{s.walls}}</div></div>
+    <div class="srow"><div class="ss">Nozzle temp</div><div class="sp">{{s.temp}}</div></div>
+    <div class="srow"><div class="ss">Bed temp</div><div class="sp">{{s.bed_temp}}</div></div>
+    <div class="srow"><div class="ss">Cooling fan</div><div class="sp">{{s.cooling}}</div></div>
+    <div class="srow"><div class="ss">Retraction</div><div class="sp">{{s.retraction}}</div></div>
+    <div class="tip" style="margin-top:14px;">💡 {{s.tip}}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- GLOSSARY -->
+<div id="page-glossary" class="page">
+  <div class="hero"><h1>3D printing glossary</h1><p>Every term explained simply — beginner to advanced</p></div>
+  <div style="margin-bottom:16px;"><input type="text" id="gloss-search" placeholder="🔍 Search terms..." oninput="filterGlossary(this.value)" style="width:100%;max-width:400px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 14px;font-size:13px;color:var(--text);outline:none;transition:all .2s;"></div>
+  <div class="gg" id="gloss-grid">{% for g in glossary %}<div class="gi" data-term="{{g.term|lower}}"><div class="gt">{{g.term}}</div><div class="gd">{{g.def}}</div></div>{% endfor %}</div>
+</div>
+
+<!-- BLOG -->
+<div id="page-blog" class="page">
+  <div class="hero"><h1>Blog & tips 📝</h1><p>Expert guides and tips for better 3D printing</p></div>
+  <div class="blog-grid">
+    {% for post in blog_posts %}
+    <div class="blog-card" onclick="toggleBlog(this)">
+      <div class="blog-emoji">{{post.emoji}}</div>
+      <div class="blog-cat">{{post.category}} · {{post.read_time}} read</div>
+      <div class="blog-title">{{post.title}}</div>
+      <div class="blog-content">
+        <div class="blog-body">{{post.content}}<ul style="margin-top:10px;padding-left:16px;line-height:2;">{% for tip in post.tips %}<li>{{tip}}</li>{% endfor %}</ul></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- EMBED -->
+<div id="page-embed" class="page">
+  <div class="hero"><h1>Embed OptimalPrint</h1><p>Add the calculator to your website with one line of code</p></div>
+  <div class="card"><div class="ct">Full app embed</div><p style="font-size:14px;color:var(--text2);margin-bottom:16px;line-height:1.7;">Copy and paste into any webpage to embed the full OptimalPrint calculator.</p><div class="embed-box" id="embed-code">&lt;iframe src="https://optimalprint.up.railway.app/app" width="100%" height="800" frameborder="0" style="border-radius:16px;border:1px solid rgba(108,99,255,0.2);"&gt;&lt;/iframe&gt;</div><button class="btn" style="max-width:200px;margin-top:14px;" onclick="copyEmbed()">Copy embed code</button></div>
+</div>
+
+<!-- HISTORY -->
+<div id="page-history" class="page">
+  <div class="hero"><h1>Print history</h1><p>Every calculation you have made{% if not current_user.is_authenticated %} — <a href="/login" style="color:var(--accent)">log in</a> to sync across devices{% endif %}</p></div>
+  {% if not current_user.is_authenticated %}
+  <div class="card" style="text-align:center;padding:36px;"><div style="font-size:40px;margin-bottom:12px;">📊</div><div style="font-size:15px;font-weight:600;margin-bottom:8px;">Save your print history</div><div style="font-size:14px;color:var(--text2);margin-bottom:20px;">Create a free account to track every calculation across all your devices</div><a href="/register"><button class="btn" style="max-width:220px;">Create free account</button></a></div>
+  {% endif %}
+  <div id="hist-list"><div class="empty">📋<br><br>No history yet — calculate some settings first!</div></div>
+</div>
+
+<!-- SAVED -->
+<div id="page-saved" class="page">
+  <div class="hero"><h1>Saved settings</h1><p>Your saved configurations{% if not current_user.is_authenticated %} — <a href="/register" style="color:var(--accent)">log in</a> to sync{% endif %}</p></div>
+  <div id="saved-list"></div>
+</div>
+
+<!-- ABOUT -->
+<div id="page-about" class="page">
+  <div class="hero"><h1>About OptimalPrint</h1><p>The engineering behind the calculations</p></div>
+  <div class="card">
+    <div style="border-left:3px solid var(--accent);padding-left:16px;margin-bottom:22px;"><div style="font-size:15px;font-weight:700;margin-bottom:7px;">How settings are calculated</div><div style="font-size:13px;color:var(--text2);line-height:1.7;">Layer height is constrained to 25–75% of nozzle diameter for proper adhesion. Speed is adjusted per printer kinematics — CoreXY handles higher accelerations than bed slingers. The quality slider interpolates between minimum and maximum layer heights with a corresponding speed correction.</div></div>
+    <div style="border-left:3px solid var(--accent);padding-left:16px;margin-bottom:22px;"><div style="font-size:15px;font-weight:700;margin-bottom:7px;">Failure risk prediction</div><div style="font-size:13px;color:var(--text2);line-height:1.7;">Warping risk uses coefficient of thermal expansion data per material. Stringing risk is based on melt viscosity at print temperature. Adhesion risk combines bed temperature requirements with material crystallinity.</div></div>
+    <div style="border-left:3px solid var(--accent);padding-left:16px;margin-bottom:22px;"><div style="font-size:15px;font-weight:700;margin-bottom:7px;">Print time estimation</div><div style="font-size:13px;color:var(--text2);line-height:1.7;">Uses a volumetric flow model: volume estimated from size category and infill. Flow rate = speed × nozzle diameter × layer height × 60. A 1.35× factor accounts for travel moves and acceleration ramps.</div></div>
+    <div style="border-left:3px solid var(--accent);padding-left:16px;"><div style="font-size:15px;font-weight:700;margin-bottom:7px;">Smart manufacturing connection</div><div style="font-size:13px;color:var(--text2);line-height:1.7;">FDM is a core additive manufacturing process used in smart factories. Process parameter optimisation reduces waste, energy consumption, and failure rates, directly supporting sustainable manufacturing goals.</div></div>
+  </div>
+</div>
+
+</div>
+<footer><div>© 2025 OptimalPrint · Built for the 3D printing community</div><div class="fl"><a href="/">Home</a><a href="/register">Sign up free</a><a href="/login">Log in</a></div></footer>
+</div>
+
+<!-- MOBILE NAV -->
+<div class="mob-nav">
+  <button class="mob-btn active" onclick="pg('optimizer',document.querySelector('.ni'));mobAct(this)"><span class="mob-icon">⚡</span>Optimise</button>
+  <button class="mob-btn" onclick="pg('materials',document.querySelectorAll('.ni')[2]);mobAct(this)"><span class="mob-icon">🧪</span>Materials</button>
+  <button class="mob-btn" onclick="pg('troubleshoot',document.querySelectorAll('.ni')[7]);mobAct(this)"><span class="mob-icon">🔧</span>Fix it</button>
+  <button class="mob-btn" onclick="pg('quiz',document.querySelectorAll('.ni')[5]);mobAct(this)"><span class="mob-icon">🎯</span>Quiz</button>
+  <button class="mob-btn" onclick="pg('saved',document.querySelectorAll('.ni')[20]);mobAct(this)"><span class="mob-icon">💾</span>Saved</button>
+</div>
+
+<!-- FAB (mobile) -->
+<button class="fab" onclick="pg('optimizer',document.querySelector('.ni'));document.querySelector('.mob-btn').classList.add('active');" title="Calculate settings">⚡</button>
+
+<script>
+var wizData={{ first_layer_wizard|tojson }};
+var quizData={{ material_quiz|tojson }};
+var compatData={{ printer_compat|tojson }};
+var filamentData={{ filaments|tojson }};
+var printerWarns={"bedslinger_TPU":"Bowden tube makes TPU very difficult.","bedslinger_Nylon":"Nylon needs enclosure mod on bed slingers.","bedslinger_Carbon Fibre PLA":"Use a 0.6mm hardened steel nozzle.","delta_TPU":"Long Bowden path makes TPU nearly impossible.","delta_Nylon":"Nylon needs enclosure — very difficult on delta.","corexY_Carbon Fibre PLA":"Use a hardened steel nozzle. CF is abrasive.","direct_Carbon Fibre PLA":"Use a hardened steel nozzle. CF is abrasive."};
+
+// SIDEBAR
+var sbOpen=true;
+function toggleSb(){
+  sbOpen=!sbOpen;
+  document.getElementById('sb').classList.toggle('col',!sbOpen);
+  document.getElementById('main').classList.toggle('col',!sbOpen);
+  localStorage.setItem('sb',sbOpen?'1':'0');
+}
+function closeSb(){document.getElementById('sb').classList.remove('mob-open');document.getElementById('mob-ov').style.display='none';}
+(function(){if(localStorage.getItem('sb')==='0'){sbOpen=false;document.getElementById('sb').classList.add('col');document.getElementById('main').classList.add('col');}})();
+
+// THEME
+function applyTheme(t){document.body.classList.toggle('light',t==='light');document.getElementById('theme-btn').textContent=t==='light'?'☾':'☀';localStorage.setItem('op-theme',t);}
+function toggleTheme(){applyTheme(document.body.classList.contains('light')?'dark':'light');}
+applyTheme(localStorage.getItem('op-theme')||'dark');
+
+// NAV
+function pg(id,btn){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.ni').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn&&btn.classList&&btn.classList.contains('ni'))btn.classList.add('active');
+  if(id==='saved')loadSaved();
+  if(id==='history')loadHistory();
+  if(id==='compat')updateCompat();
+  if(id==='wizard')wizStart();
+  if(id==='compare')runCompare();
+  if(id==='quiz')quizStart();
+  closeSb();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function mobAct(btn){document.querySelectorAll('.mob-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');}
+
+// ACCORDION
+function acc(el){var b=el.querySelector('.acc-body');var i=el.querySelector('.acc-hdr span:last-child');if(!b)return;b.classList.toggle('open');if(i)i.textContent=b.classList.contains('open')?'−':'+';}
+
+// SLICER
+function showSlicer(n,btn){document.querySelectorAll('[id^="sl-"]').forEach(function(s){s.style.display='none';});document.querySelectorAll('.st').forEach(function(b){b.classList.remove('active');});document.getElementById('sl-'+n).style.display='block';btn.classList.add('active');}
+
+// QUALITY SLIDER
+function updateQL(v){var l=['','Ultra fast','Very fast','Fast','Faster','Balanced','Better','High quality','Very high','Ultra quality','Maximum'];document.getElementById('ql-label').textContent=l[v]+' ('+v+'/10)';}
+
+// GLOSSARY
+function filterGlossary(q){document.querySelectorAll('.gi').forEach(function(item){item.style.display=item.dataset.term.includes(q.toLowerCase())?'':'none';});}
+
+// COMMON
+function loadCommon(fil,purpose,size,priority,printer){document.getElementById('filament').value=fil;document.getElementById('purpose').value=purpose;document.getElementById('size').value=size;document.getElementById('priority').value=priority;document.getElementById('printer').value=printer;pg('optimizer',document.querySelector('.ni'));}
+
+// COMPAT
+function updateCompat(){var printer=document.getElementById('compat-printer').value;var compat=compatData[printer]||[];document.querySelectorAll('[data-fil]').forEach(function(row){var fil=row.dataset.fil;var note=document.getElementById('cn-'+fil);var wk=printer+'_'+fil;if(compat.includes(fil)){row.className='compat-row cy';row.querySelector('span:first-child').textContent='✓';note.textContent=printerWarns[wk]||'Compatible';note.style.color=printerWarns[wk]?'var(--amber)':'var(--text2)';}else{row.className='compat-row cn';row.querySelector('span:first-child').textContent='✗';note.textContent='Not recommended';note.style.color='var(--red)';}});}
+
+// COMPARE
+function runCompare(){var a=document.getElementById('comp-a').value;var b=document.getElementById('comp-b').value;var fa=filamentData[a];var fb=filamentData[b];if(!fa||!fb)return;function better(va,vb,hi){if(va===vb)return['',''];return(hi?(va>vb):(va<vb))?['comp-better','comp-worse']:['comp-worse','comp-better'];}var rows=[{l:'Nozzle temp',va:fa.nozzle_temp+'°C',vb:fb.nozzle_temp+'°C',cls:['','']},{l:'Bed temp',va:fa.bed_temp+'°C',vb:fb.bed_temp+'°C',cls:['','']},{l:'Max speed',va:fa.max_speed+'mm/s',vb:fb.max_speed+'mm/s',cls:better(fa.max_speed,fb.max_speed,true)},{l:'Difficulty',va:'★'.repeat(fa.difficulty)+'☆'.repeat(5-fa.difficulty),vb:'★'.repeat(fb.difficulty)+'☆'.repeat(5-fb.difficulty),cls:better(fa.difficulty,fb.difficulty,false)},{l:'Warp risk',va:fa.warp_risk,vb:fb.warp_risk,cls:better(fa.warp_risk==='low'?0:fa.warp_risk==='medium'?1:2,fb.warp_risk==='low'?0:fb.warp_risk==='medium'?1:2,false)},{l:'Beginner friendly',va:fa.beginner_friendly?'✓ Yes':'✗ No',vb:fb.beginner_friendly?'✓ Yes':'✗ No',cls:['','']},{l:'Food safe',va:fa.food_safe?'✓':'✗',vb:fb.food_safe?'✓':'✗',cls:['','']},{l:'Outdoor safe',va:fa.outdoor_safe?'✓':'✗',vb:fb.outdoor_safe?'✓':'✗',cls:['','']},{l:'Heat resistant',va:fa.heat_resistant?'Yes':'No',vb:fb.heat_resistant?'Yes':'No',cls:['','']},{l:'Flexible',va:fa.flexible?'Yes':'No',vb:fb.flexible?'Yes':'No',cls:['','']}];function mkCol(f,fil,idx){var h='<div class="comp-col"><div style="font-size:20px;font-weight:800;color:'+f.color+';margin-bottom:4px;">'+fil+'</div><div style="font-size:13px;color:var(--text2);margin-bottom:16px;">'+f.description+'</div>';rows.forEach(function(r){h+='<div class="comp-row"><div class="comp-label">'+r.l+'</div><div class="comp-val '+r.cls[idx]+'">'+(idx===0?r.va:r.vb)+'</div></div>';});h+='<div style="margin-top:12px;"><strong style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;">Pros</strong><div style="margin-top:6px;">';f.pros.forEach(function(p){h+='<span class="tag tg">'+p+'</span>';});h+='</div></div></div>';return h;}document.getElementById('compare-results').innerHTML='<div class="comp-grid">'+mkCol(fa,a,0)+mkCol(fb,b,1)+'</div>';}
+
+// WIZARD
+var wizMap={};
+function wizStart(){wizMap={};wizData.forEach(function(q){wizMap[q.id]=q;});document.getElementById('wiz-fix').style.display='none';document.getElementById('wiz-restart').style.display='none';showWizQ('q1');}
+function showWizQ(id){var q=wizMap[id];if(!q)return;document.getElementById('wiz-q').textContent=q.question;window.__wO=q.options;var html='';for(var i=0;i<q.options.length;i++)html+='<button class="wiz-opt" onclick="pickWiz('+i+')">'+q.options[i].text+'</button>';document.getElementById('wiz-opts').innerHTML=html;}
+function pickWiz(i){var opt=window.__wO[i];if(opt.fix){document.getElementById('wiz-q').textContent='Diagnosis complete ✅';document.getElementById('wiz-opts').innerHTML='';document.getElementById('wiz-fix').innerHTML='<div class="wiz-fix">'+opt.fix+'</div>';document.getElementById('wiz-fix').style.display='block';document.getElementById('wiz-restart').style.display='block';}else if(opt.next)showWizQ(opt.next);}
+
+// MATERIAL QUIZ
+var quizMap={};
+function quizStart(){quizMap={};quizData.forEach(function(q){quizMap[q.id]=q;});document.getElementById('quiz-result').style.display='none';document.getElementById('quiz-restart').style.display='none';showQuizQ('mq1');}
+function showQuizQ(id){var q=quizMap[id];if(!q)return;document.getElementById('quiz-q').textContent=q.question;window.__qO=q.options;var html='';for(var i=0;i<q.options.length;i++)html+='<button class="wiz-opt" onclick="pickQuiz('+i+')">'+q.options[i].text+'</button>';document.getElementById('quiz-opts').innerHTML=html;}
+function pickQuiz(i){var opt=window.__qO[i];if(opt.result){var f=filamentData[opt.result];document.getElementById('quiz-q').textContent='We recommend...';document.getElementById('quiz-opts').innerHTML='';var html='<div class="quiz-result"><div class="quiz-fil-name" style="color:'+f.color+'">'+opt.result+'</div><div class="quiz-desc">'+f.description+'</div><div style="margin-bottom:12px;">'+f.pros.map(function(p){return'<span class="tag tg">'+p+'</span>';}).join('')+'</div><button class="btn" onclick="document.getElementById(\'filament\').value=\''+opt.result+'\';pg(\'optimizer\',document.querySelector(\'.ni\'))">Use '+opt.result+' in optimiser →</button></div>';document.getElementById('quiz-result').innerHTML=html;document.getElementById('quiz-result').style.display='block';document.getElementById('quiz-restart').style.display='block';}else if(opt.next)showQuizQ(opt.next);}
+
+// QUALITY ANALYSER
+function toggleIssue(btn){btn.classList.toggle('selected');}
+function analyseQuality(){var issues=document.querySelectorAll('.qa-issue.selected');var totalDeduction=0;var fixes=[];issues.forEach(function(i){totalDeduction+=parseInt(i.dataset.score);var issue=i.dataset.issue;if(issue==='stringing')fixes.push({t:'Fix stringing',d:'Increase retraction by 0.5mm steps, lower temperature by 5C, enable combing mode in your slicer, and dry your filament.'});else if(issue==='warping')fixes.push({t:'Fix warping',d:'Add 8mm brim, increase bed temperature, use enclosure for ABS/ASA, clean bed with IPA, and eliminate drafts.'});else if(issue==='layer_shift')fixes.push({t:'Fix layer shifting',d:'Reduce print speed by 30%, tension all belts, check for obstructions, and verify stepper motor connections.'});else if(issue==='underextrusion')fixes.push({t:'Fix under-extrusion',d:'Do a cold pull to clean nozzle, increase temperature by 5C, reduce speed, and check extruder gear for filament dust.'});else if(issue==='blobs')fixes.push({t:'Fix blobs and zits',d:'Enable Pressure Advance/Linear Advance in firmware, calibrate flow rate, and place seam at back of print.'});else if(issue==='ghosting')fixes.push({t:'Fix ghosting/ringing',d:'Reduce print speed, tension all belts, enable input shaping if available, and add rubber feet to printer.'});else if(issue==='elephant_foot')fixes.push({t:'Fix elephant foot',d:'Raise Z offset by 0.05mm steps, reduce first layer squish, and enable elephant foot compensation in slicer.'});else if(issue==='spaghetti')fixes.push({t:'Fix spaghetti prints',d:'Re-level bed carefully, increase first layer temperature, add brim, clean bed with IPA, and watch first 5 layers.'});});var score=Math.max(0,100-totalDeduction);var emoji=score>=90?'🟢':score>=70?'🟡':score>=50?'🟠':'🔴';var label=score>=90?'Excellent print quality!':score>=70?'Good — minor issues to fix':score>=50?'Needs improvement':score<50&&issues.length===0?'No issues selected':'Significant problems detected';document.getElementById('qa-score-display').textContent=emoji+' '+score+'/100';document.getElementById('qa-score-display').style.color=score>=90?'var(--green)':score>=70?'var(--amber)':'var(--red)';document.getElementById('qa-label').textContent=label;if(fixes.length===0){document.getElementById('qa-fixes').innerHTML='<div class="tip">No issues selected — your print looks perfect! 🎉</div>';}else{document.getElementById('qa-fixes').innerHTML=fixes.map(function(f){return'<div class="tip"><strong>'+f.t+':</strong> '+f.d+'</div>';}).join('');}document.getElementById('qa-result').style.display='block';document.getElementById('qa-result').scrollIntoView({behavior:'smooth'});}
+
+// COST CALCULATOR
+function calcCost(){var w=parseFloat(document.getElementById('cc-weight').value)||0;var fc=parseFloat(document.getElementById('cc-filcost').value)||0;var h=parseFloat(document.getElementById('cc-hours').value)||0;var watts=parseFloat(document.getElementById('cc-watts').value)||120;var kwh=parseFloat(document.getElementById('cc-kwh').value)||0.15;var markup=parseFloat(document.getElementById('cc-markup').value)||0;var filCost=(w/1000)*fc;var elecCost=(watts/1000)*h*kwh;var subtotal=filCost+elecCost;var profit=subtotal*(markup/100);var total=subtotal+profit;document.getElementById('cc-fil-cost').textContent=filCost.toFixed(2);document.getElementById('cc-elec-cost').textContent=elecCost.toFixed(2);document.getElementById('cc-profit').textContent=profit.toFixed(2);document.getElementById('cc-total').textContent=total.toFixed(2);document.getElementById('cc-result').style.display='block';document.getElementById('cc-result').scrollIntoView({behavior:'smooth'});}
+
+// PRINTER CHECKLIST
+var checkState={};
+function toggleStep(el){var t=el.querySelector('.check-tasks');var i=el.querySelector('.check-hdr span:last-child');if(!t)return;t.classList.toggle('open');if(i)i.textContent=t.classList.contains('open')?'−':'+';}
+function toggleTask(el){el.classList.toggle('done-task');var box=el.querySelector('.check-box');box.classList.toggle('checked');box.textContent=box.classList.contains('checked')?'✓':'';updateChecklistProgress();}
+function updateChecklistProgress(){var all=document.querySelectorAll('.check-task');var done=document.querySelectorAll('.check-task.done-task');var pct=all.length>0?Math.round((done.length/all.length)*100):0;document.getElementById('cl-pct').textContent=pct+'%';document.getElementById('cl-bar').style.width=pct+'%';done.length===all.length&&all.length>0&&confetti();}
+
+// BLOG
+function toggleBlog(el){var c=el.querySelector('.blog-content');if(c)c.classList.toggle('open');}
+
+// CONFETTI
+function confetti(){var colors=['#6c63ff','#22c98a','#f59e0b','#ef4444','#818cf8','#34d399'];for(var i=0;i<60;i++){setTimeout(function(){var p=document.createElement('div');p.className='confetti-piece';p.style.left=Math.random()*100+'vw';p.style.background=colors[Math.floor(Math.random()*colors.length)];p.style.animationDelay=Math.random()*0.5+'s';p.style.animationDuration=(2+Math.random()*2)+'s';document.body.appendChild(p);setTimeout(function(){p.remove();},4000);},i*30);}}
+
+// RISK HTML
+function riskHTML(label,risk){var m={low:['risk-low','var(--green)'],medium:['risk-med','var(--amber)'],high:['risk-high','var(--red)']};var cls=m[risk]||m.low;var emoji=risk==='low'?'✅':risk==='medium'?'⚠️':'🚨';return'<div class="risk '+cls[0]+'"><div class="dot" style="background:'+cls[1]+'"></div>'+emoji+' '+label+': '+risk.charAt(0).toUpperCase()+risk.slice(1)+'</div>';}
+
+// SHARE
+function copyLink(){var url=document.getElementById('share-url').textContent;navigator.clipboard.writeText(url).then(function(){var b=document.querySelector('.copy-btn');b.textContent='✓ Copied!';setTimeout(function(){b.textContent='Copy link';},2000);});}
+function copyEmbed(){navigator.clipboard.writeText(document.getElementById('embed-code').textContent).then(function(){alert('Embed code copied!');});}
+
+// PDF
+function exportPDF(){var r={layer:document.getElementById('r-layer').textContent,speed:document.getElementById('r-speed').textContent,infill:document.getElementById('r-infill').textContent,time:document.getElementById('r-time').textContent,nozzle:document.getElementById('r-nozzle').textContent,bed:document.getElementById('r-bed').textContent,cooling:document.getElementById('r-cooling').textContent,walls:document.getElementById('r-walls').textContent,pattern:document.getElementById('r-pattern').textContent,retraction:document.getElementById('r-retraction').textContent,weight:document.getElementById('r-weight').textContent,filament_name:document.getElementById('filament').value,printer_name:document.getElementById('printer').options[document.getElementById('printer').selectedIndex].text};fetch('/export-pdf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)}).then(function(res){return res.blob();}).then(function(blob){var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='OptimalPrint-settings.pdf';a.click();URL.revokeObjectURL(url);});}
+
+// SAVE
+async function saveSetting(){var data=getForm();var isLoggedIn={{ 'true' if current_user.is_authenticated else 'false' }};if(isLoggedIn){await fetch('/save-setting',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});}else{var saves=JSON.parse(localStorage.getItem('op-saves')||'[]');saves.unshift({name:data.filament+' · '+data.purpose+' · '+data.size,data:data,time:Date.now()});if(saves.length>20)saves.pop();localStorage.setItem('op-saves',JSON.stringify(saves));}var btn=document.querySelector('.btn[onclick="saveSetting()"]');btn.textContent='✓ Saved!';setTimeout(function(){btn.textContent='💾 Save';},2000);}
+
+async function loadSaved(){var el=document.getElementById('saved-list');var isLoggedIn={{ 'true' if current_user.is_authenticated else 'false' }};if(isLoggedIn){var res=await fetch('/saved-settings');var saves=await res.json();if(!saves.length){el.innerHTML='<div class="empty">💾<br><br>No saved settings yet.</div>';return;}el.innerHTML=saves.map(function(s){return'<div class="saved-item"><div class="saved-info"><div class="saved-name">'+s.name+'</div><div class="saved-meta">'+s.filament+' · '+s.purpose+' · '+s.created_at+'</div></div><div class="saved-acts"><button class="sav-btn sav-load" onclick=\'loadSavedItem('+JSON.stringify(s)+')\'>Load</button><button class="sav-btn sav-del" onclick="delSaved('+s.id+')">Delete</button></div></div>';}).join('');}else{var saves=JSON.parse(localStorage.getItem('op-saves')||'[]');if(!saves.length){el.innerHTML='<div class="empty">💾<br><br>No saved settings yet.<br>Calculate and click Save.</div>';return;}el.innerHTML=saves.map(function(s,i){return'<div class="saved-item"><div class="saved-info"><div class="saved-name">'+s.name+'</div><div class="saved-meta">'+new Date(s.time).toLocaleDateString()+'</div></div><div class="saved-acts"><button class="sav-btn sav-load" onclick="loadLocalSaved('+i+')">Load</button><button class="sav-btn sav-del" onclick="delLocalSaved('+i+')">Delete</button></div></div>';}).join('');}}
+function loadSavedItem(s){['filament','printer','purpose','nozzle','size','priority'].forEach(function(k){if(document.getElementById(k))document.getElementById(k).value=s[k]||'';});if(s.quality_level){document.getElementById('quality_level').value=s.quality_level;updateQL(s.quality_level);}pg('optimizer',document.querySelector('.ni'));}
+async function delSaved(id){await fetch('/delete-setting/'+id,{method:'DELETE'});loadSaved();}
+function loadLocalSaved(i){var s=JSON.parse(localStorage.getItem('op-saves')||'[]');loadSavedItem(s[i].data);}
+function delLocalSaved(i){var s=JSON.parse(localStorage.getItem('op-saves')||'[]');s.splice(i,1);localStorage.setItem('op-saves',JSON.stringify(s));loadSaved();}
+
+// HISTORY
+async function loadHistory(){var el=document.getElementById('hist-list');var isLoggedIn={{ 'true' if current_user.is_authenticated else 'false' }};if(!isLoggedIn){el.innerHTML='<div class="empty">🔐<br><br>Log in to see your history.</div>';return;}var res=await fetch('/history');var hist=await res.json();if(!hist.length){el.innerHTML='<div class="empty">📋<br><br>No history yet!</div>';return;}el.innerHTML=hist.map(function(h){return'<div class="hist-item"><div style="font-weight:700;min-width:110px;font-size:13px;">'+h.filament+'</div><div style="flex:1;font-size:12px;color:var(--text2);">'+h.purpose+' · '+h.printer+' · '+h.layer_height+'mm · '+h.speed+'mm/s</div><div style="text-align:right;flex-shrink:0;"><div style="font-size:12px;color:var(--accent);font-weight:700;">'+h.print_time+'</div><div style="font-size:10px;color:var(--text3);">'+h.created_at+'</div></div></div>';}).join('');}
+
+// PROGRESS
+function showProgress(){var p=document.getElementById('prog'),f=document.getElementById('prog-fill');p.style.display='block';f.style.width='0%';var w=0;var iv=setInterval(function(){w=Math.min(w+7,88);f.style.width=w+'%';},70);return{done:function(){clearInterval(iv);f.style.width='100%';setTimeout(function(){p.style.display='none';f.style.width='0%';},400);}};}
+
+// ANIMATE METRICS
+function animateMetrics(){['m-layer','m-speed','m-infill','m-time'].forEach(function(id,i){setTimeout(function(){var el=document.getElementById(id);el.classList.add('lit');setTimeout(function(){el.classList.remove('lit');},900);},i*130);});}
+
+// FORM
+function getForm(){return{filament:document.getElementById('filament').value,printer:document.getElementById('printer').value,purpose:document.getElementById('purpose').value,nozzle:document.getElementById('nozzle').value,size:document.getElementById('size').value,priority:document.getElementById('priority').value,quality_level:document.getElementById('quality_level').value};}
+
+// CALCULATE
+async function calculate(){var btn=document.querySelector('#page-optimizer .btn');btn.textContent='⏳ Calculating...';btn.disabled=true;var prog=showProgress();var data=getForm();try{var res=await fetch('/calculate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});var r=await res.json();prog.done();document.getElementById('r-layer').textContent=r.layer_height+'mm';document.getElementById('r-speed').textContent=r.speed+'mm/s';document.getElementById('r-infill').textContent=r.infill+'%';document.getElementById('r-time').textContent=r.print_time;document.getElementById('r-nozzle').textContent=r.nozzle_temp+'°C';document.getElementById('r-bed').textContent=r.bed_temp+'°C';document.getElementById('r-cooling').textContent=r.cooling+'%';document.getElementById('r-walls').textContent=r.walls;document.getElementById('r-pattern').textContent=r.infill_pattern;document.getElementById('r-retraction').textContent=r.retraction+'mm @ '+r.retraction_speed+'mm/s';document.getElementById('r-weight').textContent=r.weight_grams+'g';document.getElementById('r-length').textContent=r.filament_length_m+'m';document.getElementById('r-brim').innerHTML=r.brim_needed?'<div class="brim-badge">⚠ Brim recommended — use at least 8mm</div>':'';document.getElementById('r-compat').innerHTML=r.compat_warning?'<div class="warn-box">⚠ '+r.compat_warning+'</div>':'';document.getElementById('r-enclosure').innerHTML=r.needs_enclosure?'<div class="warn-box">⚠ This filament requires a printer enclosure for best results.</div>':'';document.getElementById('r-printer-note').innerHTML=r.printer_note?'<div class="info-box">ℹ '+r.printer_note+'</div>':'';document.getElementById('r-warp').innerHTML=riskHTML('Warping risk',r.warp_risk);document.getElementById('r-string').innerHTML=riskHTML('Stringing risk',r.string_risk);document.getElementById('r-adhesion').innerHTML=riskHTML('Layer adhesion risk',r.adhesion_risk);var ql=parseInt(data.quality_level),pr=data.priority;var qp=pr==='smoothest'?95:pr==='fastest'?10:ql*9;var sp=pr==='fastest'?95:pr==='smoothest'?15:(10-ql)*9;var stp=pr==='strongest'?90:data.purpose==='functional'?65:35;var mp=Math.min(r.infill+20,95);setTimeout(function(){document.getElementById('b-quality').style.width=qp+'%';document.getElementById('bp-quality').textContent=qp+'%';document.getElementById('b-speed').style.width=sp+'%';document.getElementById('bp-speed').textContent=sp+'%';document.getElementById('b-strength').style.width=stp+'%';document.getElementById('bp-strength').textContent=stp+'%';document.getElementById('b-material').style.width=mp+'%';document.getElementById('bp-material').textContent=mp+'%';},300);var cost=parseFloat(document.getElementById('filament_cost').value);var cur=document.getElementById('currency');var sym=cur.options[cur.selectedIndex].dataset.symbol;if(cost>0){document.getElementById('r-cost').textContent=sym+(r.weight_grams/1000*cost).toFixed(2);document.getElementById('r-cost-sub').textContent=r.weight_grams+'g · '+r.filament_length_m+'m · '+sym+cost+' per kg';document.getElementById('r-cost-sec').style.display='block';}else{document.getElementById('r-cost-sec').style.display='none';}document.getElementById('r-tips').innerHTML=r.tips.map(function(t){return'<div class="tip">'+t+'</div>';}).join('');document.getElementById('r-comm-tips').innerHTML=r.community_tips.map(function(t){return'<div class="com-tip">💬 '+t+'</div>';}).join('');var url=window.location.origin+'/app?'+new URLSearchParams(data).toString();document.getElementById('share-url').textContent=url;history.replaceState(null,'','/app?'+new URLSearchParams(data).toString());document.getElementById('results').classList.add('vis');setTimeout(animateMetrics,200);confetti();document.getElementById('results').scrollIntoView({behavior:'smooth'});}catch(e){prog.done();alert('Something went wrong — make sure Flask is still running!');}btn.textContent='⚡ Calculate optimal settings';btn.disabled=false;}
+
+// LOAD FROM URL
+function loadFromURL(){var p=new URLSearchParams(window.location.search);var fields=['filament','printer','purpose','nozzle','size','priority','quality_level'];var any=false;fields.forEach(function(f){if(p.get(f)&&document.getElementById(f)){document.getElementById(f).value=p.get(f);any=true;}});if(p.get('quality_level'))updateQL(p.get('quality_level'));if(any)calculate();}
+
+updateCompat();wizStart();quizStart();runCompare();loadFromURL();
+</script>
+</body>
+</html>
