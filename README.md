@@ -44,33 +44,6 @@ OptimalPrint was built to make 3D printing easier for beginners and more efficie
 
 ---
 
-## Installation
-
-Clone the repository:
-
-```bash
-git clone https://github.com/Muflih-7/Optimal-Print.git
-```
-
-Open the project folder:
-
-```bash
-cd Optimal-Print
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-Run the app:
-
-```bash
-python app.py
-```
-
----
 
 ## License
 
