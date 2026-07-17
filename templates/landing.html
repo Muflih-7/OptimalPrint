@@ -7,84 +7,108 @@
 <meta name="description" content="Stop guessing your 3D print settings. OptimalPrint calculates optimal layer height, speed, temperature and infill for any filament and printer. Free.">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#06060e;color:#e8e8f0;overflow-x:hidden;}
+:root{
+  --bg:#0a0c10;
+  --paper:#0d1015;
+  --line:rgba(245,166,35,0.05);
+  --line-major:rgba(245,166,35,0.09);
+  --amber:#e8961e;
+  --amber-dim:#a3660f;
+  --text:#eae6dc;
+  --text-dim:#8a8f98;
+  --text-mute:#4b4f57;
+  --border:rgba(232,150,30,0.18);
+  --mono:ui-monospace,SFMono-Regular,'Cascadia Code','JetBrains Mono',Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+}
+body{
+  font-family:var(--sans);
+  background-color:var(--bg);
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px),
+    linear-gradient(var(--line-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-major) 1px, transparent 1px);
+  background-size:20px 20px,20px 20px,100px 100px,100px 100px;
+  color:var(--text);
+  overflow-x:hidden;
+}
 a{text-decoration:none;color:inherit;}
 
-/* ANIMATED BACKGROUND */
-.bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
-.content{position:relative;z-index:1;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 32px;height:60px;display:flex;align-items:center;gap:14px;background:rgba(10,12,16,0.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);}
+.nav-logo{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:700;letter-spacing:-0.01em;}
+.nav-logo svg{color:var(--amber);}
+.nav-right{margin-left:auto;display:flex;gap:10px;align-items:center;}
+.btn-ghost{padding:7px 16px;border:1px solid var(--border);border-radius:3px;font-size:13px;font-family:var(--mono);color:var(--text-dim);cursor:pointer;transition:all 0.15s;background:transparent;}
+.btn-ghost:hover{border-color:var(--amber-dim);color:var(--text);}
+.btn-primary{padding:7px 16px;border:1px solid var(--amber);border-radius:3px;font-size:13px;font-family:var(--mono);font-weight:600;cursor:pointer;background:var(--amber);color:#181205;transition:all 0.15s;}
+.btn-primary:hover{background:#f5a52c;}
 
-nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 32px;height:64px;display:flex;align-items:center;gap:14px;background:rgba(6,6,14,0.7);backdrop-filter:blur(20px);border-bottom:1px solid rgba(108,99,255,0.15);}
-.nav-logo{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;color:#6c63ff;}
-.nav-right{margin-left:auto;display:flex;gap:10px;}
-.btn-ghost{padding:8px 18px;border:1px solid rgba(108,99,255,0.3);border-radius:8px;font-size:13px;color:#9090bb;cursor:pointer;transition:all 0.2s;background:transparent;}
-.btn-ghost:hover{border-color:#6c63ff;color:#e8e8f0;background:rgba(108,99,255,0.08);}
-.btn-primary{padding:8px 18px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,#6c63ff,#4f46e5);color:#fff;transition:all 0.2s;box-shadow:0 0 20px rgba(108,99,255,0.3);}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 0 30px rgba(108,99,255,0.5);}
+.hero{min-height:92vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 20px 60px;position:relative;}
+.hero-tick{position:absolute;width:14px;height:14px;border:1px solid var(--amber-dim);opacity:0.5;}
+.hero-tick.tl{top:80px;left:40px;border-right:none;border-bottom:none;}
+.hero-tick.br{bottom:40px;right:40px;border-left:none;border-top:none;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);color:var(--amber);font-family:var(--mono);font-size:11.5px;font-weight:600;padding:6px 14px;border-radius:2px;margin-bottom:32px;letter-spacing:0.08em;animation:fadeUp 0.5s ease both;}
+.hero-badge::before{content:'';width:6px;height:6px;background:var(--amber);}
+.hero h1{font-size:clamp(34px,6.5vw,72px);font-weight:700;letter-spacing:-0.03em;line-height:1.08;margin-bottom:22px;color:var(--text);animation:fadeUp 0.5s ease 0.08s both;}
+.hero h1 em{font-style:normal;color:var(--amber);}
+.hero p{font-size:clamp(15px,1.8vw,18px);color:var(--text-dim);max-width:540px;line-height:1.7;margin-bottom:40px;animation:fadeUp 0.5s ease 0.16s both;}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;animation:fadeUp 0.5s ease 0.24s both;}
+.btn-lg{padding:14px 30px;border-radius:3px;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s;border:none;font-family:var(--sans);}
+.btn-lg-primary{background:var(--amber);color:#181205;}
+.btn-lg-primary:hover{background:#f5a52c;transform:translateY(-1px);}
+.btn-lg-ghost{background:transparent;border:1px solid var(--border);color:var(--text-dim);}
+.btn-lg-ghost:hover{border-color:var(--amber-dim);color:var(--text);}
 
-.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 20px 60px;}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.3);color:#a09aff;font-size:12px;font-weight:600;padding:6px 18px;border-radius:99px;margin-bottom:28px;letter-spacing:0.05em;animation:fadeUp 0.6s ease both;}
-.hero h1{font-size:clamp(36px,7vw,80px);font-weight:800;letter-spacing:-0.04em;line-height:1.05;margin-bottom:22px;background:linear-gradient(135deg,#ffffff 0%,#a09aff 50%,#6c63ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:fadeUp 0.6s ease 0.1s both;}
-.hero p{font-size:clamp(16px,2vw,20px);color:#7070aa;max-width:560px;line-height:1.7;margin-bottom:40px;animation:fadeUp 0.6s ease 0.2s both;}
-.hero-btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;animation:fadeUp 0.6s ease 0.3s both;}
-.btn-lg{padding:15px 36px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;transition:all 0.2s;border:none;}
-.btn-lg-primary{background:linear-gradient(135deg,#6c63ff,#4f46e5);color:#fff;box-shadow:0 0 40px rgba(108,99,255,0.4);}
-.btn-lg-primary:hover{transform:translateY(-2px);box-shadow:0 0 60px rgba(108,99,255,0.6);}
-.btn-lg-ghost{background:transparent;border:1px solid rgba(255,255,255,0.15);color:#9090bb;}
-.btn-lg-ghost:hover{border-color:rgba(108,99,255,0.5);color:#e8e8f0;background:rgba(108,99,255,0.05);}
-
-.hero-stats{display:flex;gap:48px;margin-top:72px;flex-wrap:wrap;justify-content:center;animation:fadeUp 0.6s ease 0.4s both;}
-.stat{text-align:center;}
-.stat-num{font-size:32px;font-weight:800;background:linear-gradient(135deg,#a09aff,#6c63ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.stat-label{font-size:13px;color:#44445a;margin-top:4px;}
+.hero-stats{display:flex;gap:0;margin-top:76px;flex-wrap:wrap;justify-content:center;animation:fadeUp 0.5s ease 0.32s both;border:1px solid var(--border);border-radius:3px;overflow:hidden;}
+.stat{text-align:center;padding:16px 30px;border-right:1px solid var(--border);}
+.stat:last-child{border-right:none;}
+.stat-num{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--amber);}
+.stat-label{font-family:var(--mono);font-size:10.5px;color:var(--text-mute);margin-top:4px;letter-spacing:0.04em;text-transform:uppercase;}
 
 /* FEATURES */
-.section{padding:100px 20px;max-width:1100px;margin:0 auto;}
-.section-badge{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#6c63ff;margin-bottom:14px;}
-.section-title{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-0.03em;margin-bottom:16px;line-height:1.1;}
-.section-sub{font-size:16px;color:#7070aa;max-width:500px;line-height:1.6;}
+.section{padding:96px 20px;max-width:1100px;margin:0 auto;}
+.section-badge{font-family:var(--mono);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--amber);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.section-badge::before{content:'';width:16px;height:1px;background:var(--amber-dim);}
+.section-title{font-size:clamp(26px,3.6vw,42px);font-weight:700;letter-spacing:-0.02em;margin-bottom:16px;line-height:1.15;}
+.section-sub{font-size:15px;color:var(--text-dim);max-width:500px;line-height:1.6;}
 
-.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1px;background:rgba(108,99,255,0.1);border-radius:20px;overflow:hidden;margin-top:52px;border:1px solid rgba(108,99,255,0.15);}
-.feat{background:#0a0a16;padding:28px;transition:background 0.2s;}
-.feat:hover{background:#0f0f1f;}
-.feat-icon{font-size:28px;margin-bottom:14px;}
-.feat-title{font-size:16px;font-weight:600;margin-bottom:8px;color:#e8e8f0;}
-.feat-desc{font-size:14px;color:#6060aa;line-height:1.6;}
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:48px;border:1px solid var(--border);}
+.feat{background:var(--paper);padding:26px;transition:background 0.15s;position:relative;}
+.feat:hover{background:#12161d;}
+.feat-icon{width:26px;height:26px;color:var(--amber);margin-bottom:16px;}
+.feat-title{font-size:15px;font-weight:600;margin-bottom:8px;color:var(--text);}
+.feat-desc{font-size:13.5px;color:var(--text-dim);line-height:1.6;}
 
 /* HOW IT WORKS */
-.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:52px;}
-.step{background:linear-gradient(135deg,#0d0d1e,#0a0a16);border:1px solid rgba(108,99,255,0.15);border-radius:16px;padding:28px;position:relative;overflow:hidden;}
-.step::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#6c63ff,transparent);}
-.step-num{font-size:48px;font-weight:800;color:rgba(108,99,255,0.1);position:absolute;top:16px;right:20px;line-height:1;}
-.step-icon{font-size:28px;margin-bottom:14px;}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;margin-top:48px;background:var(--border);border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+.step{background:var(--paper);padding:26px;position:relative;}
+.step-num{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--amber);border:1px solid var(--border);width:26px;height:26px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
 .step-title{font-size:15px;font-weight:600;margin-bottom:8px;}
-.step-desc{font-size:13px;color:#6060aa;line-height:1.6;}
+.step-desc{font-size:13px;color:var(--text-dim);line-height:1.6;}
 
 /* FILAMENTS */
-.fil-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:52px;}
-.fil-tag{padding:10px 20px;border-radius:99px;font-size:14px;font-weight:600;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);cursor:default;transition:all 0.2s;}
-.fil-tag:hover{transform:translateY(-2px);}
+.fil-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:48px;}
+.fil-tag{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:2px;font-family:var(--mono);font-size:13px;font-weight:600;border:1px solid var(--border);background:var(--paper);cursor:default;}
+.fil-swatch{width:9px;height:9px;flex-shrink:0;}
 
 /* CTA */
-.cta{text-align:center;padding:120px 20px;position:relative;}
-.cta-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:300px;background:radial-gradient(ellipse,rgba(108,99,255,0.12) 0%,transparent 70%);pointer-events:none;}
-.cta h2{font-size:clamp(28px,5vw,56px);font-weight:800;letter-spacing:-0.03em;margin-bottom:16px;background:linear-gradient(135deg,#fff,#a09aff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.cta p{font-size:16px;color:#7070aa;margin-bottom:40px;}
+.cta{text-align:center;padding:110px 20px;border-top:1px solid var(--border);}
+.cta h2{font-size:clamp(26px,4.4vw,48px);font-weight:700;letter-spacing:-0.02em;margin-bottom:16px;color:var(--text);}
+.cta p{font-family:var(--mono);font-size:13px;color:var(--text-dim);margin-bottom:36px;letter-spacing:0.02em;}
 
-footer{border-top:1px solid rgba(108,99,255,0.1);padding:36px 32px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;font-size:13px;color:#44445a;}
-.footer-links{display:flex;gap:24px;}
-.footer-links a:hover{color:#a09aff;}
+footer{border-top:1px solid var(--border);padding:32px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--text-mute);}
+.footer-links{display:flex;gap:22px;}
+.footer-links a:hover{color:var(--amber);}
 
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
 </style>
 </head>
 <body>
-<canvas class="bg-canvas" id="canvas"></canvas>
-<div class="content">
 
 <nav>
   <div class="nav-logo">
-    <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><path d="M16 3L3 10l13 7 13-7-13-7z" stroke="#6c63ff" stroke-width="2" stroke-linejoin="round"/><path d="M3 22l13 7 13-7" stroke="#6c63ff" stroke-width="2" stroke-linejoin="round"/><path d="M3 16l13 7 13-7" stroke="#6c63ff" stroke-width="1.5" stroke-linejoin="round" opacity="0.5"/></svg>
+    <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><path d="M16 3L3 10l13 7 13-7-13-7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M3 22l13 7 13-7" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M3 16l13 7 13-7" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" opacity="0.5"/></svg>
     OptimalPrint
   </div>
   <div class="nav-right">
@@ -94,8 +118,10 @@ footer{border-top:1px solid rgba(108,99,255,0.1);padding:36px 32px;display:flex;
 </nav>
 
 <section class="hero">
-  <div class="hero-badge">✦ FREE · NO CREDIT CARD · NO LIMITS</div>
-  <h1>Perfect 3D print<br>settings, instantly</h1>
+  <div class="hero-tick tl"></div>
+  <div class="hero-tick br"></div>
+  <div class="hero-badge">FREE — NO CREDIT CARD — NO LIMITS</div>
+  <h1>Perfect 3D print<br>settings, <em>instantly</em></h1>
   <p>Stop wasting filament on failed prints. Enter your setup and get optimised parameters, failure risk analysis, and pro tips — in seconds.</p>
   <div class="hero-btns">
     <a href="/app"><button class="btn-lg btn-lg-primary">Start optimising — it's free</button></a>
@@ -109,59 +135,52 @@ footer{border-top:1px solid rgba(108,99,255,0.1);padding:36px 32px;display:flex;
   </div>
 </section>
 
-<div style="border-top:1px solid rgba(108,99,255,0.1);"></div>
-
 <div class="section">
   <div class="section-badge">Features</div>
   <div class="section-title">Everything for a<br>perfect print</div>
   <div class="section-sub">From settings to failure prediction to troubleshooting — all free, all in one place.</div>
   <div class="features">
-    <div class="feat"><div class="feat-icon">⚡</div><div class="feat-title">Instant settings calculator</div><div class="feat-desc">Layer height, speed, infill, temperatures and retraction — calculated from your exact setup in milliseconds.</div></div>
-    <div class="feat"><div class="feat-icon">🔬</div><div class="feat-title">Failure risk analysis</div><div class="feat-desc">Predicts warping, stringing and adhesion risks before you start. Saves filament and time.</div></div>
-    <div class="feat"><div class="feat-icon">💰</div><div class="feat-title">Print cost estimator</div><div class="feat-desc">Know exactly how much each print costs in your currency before you hit print.</div></div>
-    <div class="feat"><div class="feat-icon">🧙</div><div class="feat-title">First layer wizard</div><div class="feat-desc">Step-by-step diagnosis for first layer problems. Answer questions and get a precise fix.</div></div>
-    <div class="feat"><div class="feat-icon">📚</div><div class="feat-title">Complete guides</div><div class="feat-desc">Drying guide, bed adhesion guide, supports guide, slicer guide and full glossary.</div></div>
-    <div class="feat"><div class="feat-icon">🔗</div><div class="feat-title">Shareable links</div><div class="feat-desc">Share your exact settings with anyone via a URL. Works across devices and browsers.</div></div>
-    <div class="feat"><div class="feat-icon">💾</div><div class="feat-title">Save your settings</div><div class="feat-desc">Create an account to save favourite configurations and access your full print history.</div></div>
-    <div class="feat"><div class="feat-icon">📄</div><div class="feat-title">PDF export</div><div class="feat-desc">Download your settings as a clean PDF to keep next to your printer or share with your team.</div></div>
+    <div class="feat"><svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg><div class="feat-title">Instant settings calculator</div><div class="feat-desc">Layer height, speed, infill, temperatures and retraction — calculated from your exact setup in milliseconds.</div></div>
+    <div class="feat"><svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3l9-16z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg><div class="feat-title">Failure risk analysis</div><div class="feat-desc">Predicts warping, stringing and adhesion risks before you start. Saves filament and time.</div></div>
+    <div class="feat"><svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 9.5c0-1 1-1.8 2.5-1.8s2.5.8 2.5 1.8-1 1.4-2.5 1.6-2.5.9-2.5 1.9 1 1.8 2.5 1.8 2.5-.8 2.5-1.8"/></svg><div class="feat-title">Print cost estimator</div><div class="feat-desc">Know exactly how much each print costs in your currency before you hit print.</div></div>
+    <div class="feat"><svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="14" width="16" height="6" rx="1"/><rect x="6" y="9" width="12" height="5" rx="1"/><rect x="8" y="4" width="8" height="5" rx="1"/></svg><div class="feat-title">First layer wizard</div><div class="feat-desc">Step-by-step diagnosis for first layer problems. Answer questions and get a precise fix.</div></div>
+    <div class="feat"><svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5v14a2 2 0 0 0 2 2h12"/><path d="M4 5a2 2 0 0 1 2-2h12v18"/><path d="M8 8h6M8 12h6"/></svg><div class="feat-title">Complete guides</div><div class="feat-desc">Drying guide, bed adhesion guide, supports guide, slicer guide and full glossary.</div></div>
+    <div class="feat"><svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12a4 4 0 0 0 6 3.5l3-3a4 4 0 0 0-5.5-5.8"/><path d="M15 12a4 4 0 0 0-6-3.5l-3 3a4 4 0 0 0 5.5 5.8"/></svg><div class="feat-title">Shareable links</div><div class="feat-desc">Share your exact settings with anyone via a URL. Works across devices and browsers.</div></div>
+    <div class="feat"><svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4h11l3 3v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M8 4v6h8V4"/><path d="M8 14h8v6H8z"/></svg><div class="feat-title">Save your settings</div><div class="feat-desc">Create an account to save favourite configurations and access your full print history.</div></div>
+    <div class="feat"><svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M15 3v4h4"/><path d="M8 13h8M8 16h5"/></svg><div class="feat-title">PDF export</div><div class="feat-desc">Download your settings as a clean PDF to keep next to your printer or share with your team.</div></div>
   </div>
 </div>
-
-<div style="border-top:1px solid rgba(108,99,255,0.1);"></div>
 
 <div class="section">
   <div class="section-badge">How it works</div>
   <div class="section-title">Three steps to<br>a perfect print</div>
   <div class="how">
-    <div class="step"><div class="step-num">1</div><div class="step-icon">🖨️</div><div class="step-title">Enter your setup</div><div class="step-desc">Choose filament, printer, nozzle, object size, and what you are printing.</div></div>
-    <div class="step"><div class="step-num">2</div><div class="step-icon">⚡</div><div class="step-title">Get optimal settings</div><div class="step-desc">OptimalPrint calculates all parameters using material science and FDM physics.</div></div>
-    <div class="step"><div class="step-num">3</div><div class="step-icon">✅</div><div class="step-title">Print with confidence</div><div class="step-desc">Enter settings into your slicer and print — with failure risks flagged before you start.</div></div>
+    <div class="step"><div class="step-num">1</div><div class="step-title">Enter your setup</div><div class="step-desc">Choose filament, printer, nozzle, object size, and what you are printing.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-title">Get optimal settings</div><div class="step-desc">OptimalPrint calculates all parameters using material science and FDM physics.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-title">Print with confidence</div><div class="step-desc">Enter settings into your slicer and print — with failure risks flagged before you start.</div></div>
   </div>
 </div>
-
-<div style="border-top:1px solid rgba(108,99,255,0.1);"></div>
 
 <div class="section">
   <div class="section-badge">Supported filaments</div>
   <div class="section-title">All the filaments<br>you actually use</div>
   <div class="fil-row">
-    <div class="fil-tag" style="color:#5DCAA5;border-color:rgba(93,202,165,0.2);">PLA</div>
-    <div class="fil-tag" style="color:#4DBBA5;border-color:rgba(77,187,165,0.2);">PLA+</div>
-    <div class="fil-tag" style="color:#378ADD;border-color:rgba(55,138,221,0.2);">PETG</div>
-    <div class="fil-tag" style="color:#D85A30;border-color:rgba(216,90,48,0.2);">ABS</div>
-    <div class="fil-tag" style="color:#7F77DD;border-color:rgba(127,119,221,0.2);">ASA</div>
-    <div class="fil-tag" style="color:#D4537E;border-color:rgba(212,83,126,0.2);">TPU</div>
-    <div class="fil-tag" style="color:#E8A030;border-color:rgba(232,160,48,0.2);">Nylon</div>
-    <div class="fil-tag" style="color:#A0714F;border-color:rgba(160,113,79,0.2);">Wood PLA</div>
-    <div class="fil-tag" style="color:#8888aa;border-color:rgba(136,136,170,0.2);">Carbon Fibre PLA</div>
+    <div class="fil-tag"><span class="fil-swatch" style="background:#5DCAA5;"></span>PLA</div>
+    <div class="fil-tag"><span class="fil-swatch" style="background:#4DBBA5;"></span>PLA+</div>
+    <div class="fil-tag"><span class="fil-swatch" style="background:#378ADD;"></span>PETG</div>
+    <div class="fil-tag"><span class="fil-swatch" style="background:#D85A30;"></span>ABS</div>
+    <div class="fil-tag"><span class="fil-swatch" style="background:#7F77DD;"></span>ASA</div>
+    <div class="fil-tag"><span class="fil-swatch" style="background:#D4537E;"></span>TPU</div>
+    <div class="fil-tag"><span class="fil-swatch" style="background:#E8A030;"></span>Nylon</div>
+    <div class="fil-tag"><span class="fil-swatch" style="background:#A0714F;"></span>Wood PLA</div>
+    <div class="fil-tag"><span class="fil-swatch" style="background:#9a9fa8;"></span>Carbon Fibre PLA</div>
   </div>
 </div>
 
 <div class="cta">
-  <div class="cta-glow"></div>
   <h2>Ready for perfect prints?</h2>
-  <p>Free. No credit card. No limits. Start in seconds.</p>
-  <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+  <p>FREE — NO CREDIT CARD — NO LIMITS — START IN SECONDS</p>
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
     <a href="/app"><button class="btn-lg btn-lg-primary">Open the optimiser</button></a>
     <a href="/register"><button class="btn-lg btn-lg-ghost">Create free account</button></a>
   </div>
@@ -176,88 +195,5 @@ footer{border-top:1px solid rgba(108,99,255,0.1);padding:36px 32px;display:flex;
   </div>
 </footer>
 
-</div>
-
-<script>
-// ANIMATED PARTICLE BACKGROUND
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-let particles = [];
-let W, H;
-
-function resize(){
-  W = canvas.width = window.innerWidth;
-  H = canvas.height = window.innerHeight;
-}
-
-function Particle(){
-  this.x = Math.random() * W;
-  this.y = Math.random() * H;
-  this.size = Math.random() * 1.5 + 0.5;
-  this.speedX = (Math.random() - 0.5) * 0.3;
-  this.speedY = (Math.random() - 0.5) * 0.3;
-  this.opacity = Math.random() * 0.4 + 0.1;
-}
-
-function initParticles(){
-  particles = [];
-  for(var i = 0; i < 80; i++) particles.push(new Particle());
-}
-
-function drawParticles(){
-  ctx.clearRect(0, 0, W, H);
-
-  // Gradient glow blobs
-  var g1 = ctx.createRadialGradient(W*0.3, H*0.3, 0, W*0.3, H*0.3, W*0.4);
-  g1.addColorStop(0, 'rgba(108,99,255,0.06)');
-  g1.addColorStop(1, 'transparent');
-  ctx.fillStyle = g1;
-  ctx.fillRect(0, 0, W, H);
-
-  var g2 = ctx.createRadialGradient(W*0.8, H*0.7, 0, W*0.8, H*0.7, W*0.35);
-  g2.addColorStop(0, 'rgba(79,70,229,0.04)');
-  g2.addColorStop(1, 'transparent');
-  ctx.fillStyle = g2;
-  ctx.fillRect(0, 0, W, H);
-
-  // Particles
-  particles.forEach(function(p){
-    p.x += p.speedX;
-    p.y += p.speedY;
-    if(p.x < 0) p.x = W;
-    if(p.x > W) p.x = 0;
-    if(p.y < 0) p.y = H;
-    if(p.y > H) p.y = 0;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(108,99,255,' + p.opacity + ')';
-    ctx.fill();
-  });
-
-  // Connect nearby particles
-  for(var i = 0; i < particles.length; i++){
-    for(var j = i+1; j < particles.length; j++){
-      var dx = particles[i].x - particles[j].x;
-      var dy = particles[i].y - particles[j].y;
-      var dist = Math.sqrt(dx*dx + dy*dy);
-      if(dist < 120){
-        ctx.beginPath();
-        ctx.moveTo(particles[i].x, particles[i].y);
-        ctx.lineTo(particles[j].x, particles[j].y);
-        ctx.strokeStyle = 'rgba(108,99,255,' + (0.08 * (1 - dist/120)) + ')';
-        ctx.lineWidth = 0.5;
-        ctx.stroke();
-      }
-    }
-  }
-
-  requestAnimationFrame(drawParticles);
-}
-
-window.addEventListener('resize', function(){ resize(); initParticles(); });
-resize();
-initParticles();
-drawParticles();
-</script>
 </body>
 </html>
